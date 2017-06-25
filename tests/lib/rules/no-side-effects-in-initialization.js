@@ -13,21 +13,52 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
 
   valid: [
     'const x = 1',
-    `const x = 1
-        x = 2`,
+    'let x; x = 1',
+    'const x = {}; x.y = 1',
+    'const x = () => {};x()',
+    'const x = {y(){}};x.y()',
+    'const x = () => {}, y = () => {};x(y())',
     'export const x = {}'
   ],
 
   invalid: [
     {
-      code: 'x = 1',
+      code: 'ext = 1',
       errors: [{
         message: "Initialization code should not have side effects",
         type: "Identifier"
       }]
     },
     {
-      code: 'export const x = Object.freeze({})',
+      code: 'ext.x = 1',
+      errors: [{
+        message: "Initialization code should not have side effects",
+        type: "MemberExpression"
+      }]
+    },
+    {
+      code: 'ext()',
+      errors: [{
+        message: "Initialization code should not have side effects",
+        type: "Identifier"
+      }]
+    },
+    {
+      code: 'ext.x()',
+      errors: [{
+        message: "Initialization code should not have side effects",
+        type: "MemberExpression"
+      }]
+    },
+    {
+      code: 'const x = () => {};x(ext())',
+      errors: [{
+        message: "Initialization code should not have side effects",
+        type: "Identifier"
+      }]
+    },
+    {
+      code: 'const x = ext;x()',
       errors: [{
         message: "Initialization code should not have side effects",
         type: "Identifier"
@@ -35,3 +66,13 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
     }
   ]
 })
+
+// TODO side effects inside functions called synchronously
+// we need to know if calling a function would have side effects but only report them when the
+// function is called in which case we should consider reporting the side effect and the function
+// call
+
+// TODO different scoping for let/const and var; also check if blocks:
+//      https://developer.mozilla.org/de/docs/Web/JavaScript/Reference/Statements/let
+
+// TODO calling functions to which external functions are assigned to
