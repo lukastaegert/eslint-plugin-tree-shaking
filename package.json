@@ -13,7 +13,6 @@
     "test": "mocha tests --recursive"
   },
   "dependencies": {
-    "ramda": "^0.24.1",
     "requireindex": "~1.1.0"
   },
   "devDependencies": {
