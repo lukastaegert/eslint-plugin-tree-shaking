@@ -4,9 +4,9 @@ const rule = require('../../../lib/rules/no-side-effects-in-initialization'),
 RuleTester.setDefaultConfig({
   parserOptions: {
     ecmaVersion: 6,
-    sourceType: "module"
+    sourceType: 'module'
   }
-});
+})
 
 /* Bugs in rollup:
  * * Reassigning a variable that is at some point a function will be an effect; instead, check
@@ -14,7 +14,12 @@ RuleTester.setDefaultConfig({
  * * This generally goes for reassignments where any assignment is non-trivial
  * * Reassigning var with var is handled differently from reassigning without var
  * * Side effects in function call arguments
-*/
+ */
+
+/* Before release:
+ * * export {..}
+ * * destructuring assignment
+ */
 
 const ruleTester = new RuleTester()
 ruleTester.run('no-side-effects-in-initialization', rule, {
@@ -35,64 +40,71 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
     {
       code: 'ext = 1',
       errors: [{
-        message: "Initialization code should not have side effects",
-        type: "Identifier"
+        message: 'Assignment to a global variable is a side-effect',
+        type: 'Identifier'
       }]
     },
     {
       code: 'ext.x = 1',
       errors: [{
-        message: "Initialization code should not have side effects",
-        type: "MemberExpression"
+        message: 'Assignment to a member of a global variable is a side-effect',
+        type: 'Identifier'
       }]
     },
     {
       code: 'ext()',
       errors: [{
-        message: "Initialization code should not have side effects",
-        type: "Identifier"
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'ext.x()',
+      errors: [{
+        message: 'Could not determine side-effects of member function',
+        type: 'Identifier'
       }]
     },
     {
       code: 'const x = ext; x()',
       errors: [{
-        message: "Initialization code should not have side effects",
-        type: "Identifier"
+        message: 'Assigned expression with unknown side-effects might be called as a function',
+        type: 'Identifier'
       }]
     },
     {
       code: 'let x = () => {}; x = ext; x()',
       errors: [{
-        message: "Initialization code should not have side effects",
-        type: "Identifier"
+        message: 'Assigned expression with unknown side-effects might be called as a function',
+        type: 'Identifier'
       }]
     },
     {
-      code: 'var x = () => {}; var x = ext; x()',
+      code: 'var x = () => {}; var x = ext; x()',// Is currently removed by rollup even though it should not be
       errors: [{
-        message: "Initialization code should not have side effects",
-        type: "Identifier"
+        message: 'Assigned expression with unknown side-effects might be called as a function',
+        type: 'Identifier'
       }]
     },
     {
       code: 'const x = {y: ext}; x.y()',
       errors: [{
-        message: "Initialization code should not have side effects",
-        type: "MemberExpression"
+        message: 'Could not determine side-effects of member function',
+        type: 'Identifier'
       }]
     },
     {
       code: 'const x = () => {}; x(ext())',// Is currently removed by rollup even though it should not be
       errors: [{
-        message: "Initialization code should not have side effects",
-        type: "Identifier"
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
       }]
     },
     {
       code: 'const x = () => {ext()}; x()',
       errors: [{
-        message: "Initialization code should not have side effects",
-        type: "Identifier"
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
       }]
     }
   ]
