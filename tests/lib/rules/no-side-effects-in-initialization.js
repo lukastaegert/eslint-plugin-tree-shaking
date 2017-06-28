@@ -24,10 +24,10 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
     'let x = 1 + 2; x = 2 + 3',
     'var x = 1 + 2; var x = 2 + 3',
     'const x = {}; x.y = 1',
-    'const x = () => {};x()',
-    'const x = () => {}, y = () => {};x(y())',
-    'const x = () => {}, y = () => {x()};y()',
-    'const x = ext, y = () => {const x = () => {};x()};y()',
+    'const x = () => {}; x()',
+    'const x = () => {}, y = () => {}; x(y())',
+    'const x = () => {}, y = () => {x()}; y()',
+    'const x = ext, y = () => {const x = () => {}; x()}; y()',
     'export const x = {}'
   ],
 
@@ -54,42 +54,42 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
       }]
     },
     {
-      code: 'const x = ext;x()',
+      code: 'const x = ext; x()',
       errors: [{
         message: "Initialization code should not have side effects",
         type: "Identifier"
       }]
     },
     {
-      code: 'let x = () => {};x = ext;x()',
+      code: 'let x = () => {}; x = ext; x()',
       errors: [{
         message: "Initialization code should not have side effects",
         type: "Identifier"
       }]
     },
     {
-      code: 'var x = () => {};var x = ext;x()',
+      code: 'var x = () => {}; var x = ext; x()',
       errors: [{
         message: "Initialization code should not have side effects",
         type: "Identifier"
       }]
     },
     {
-      code: 'const x = {y: ext};x.y()',
+      code: 'const x = {y: ext}; x.y()',
       errors: [{
         message: "Initialization code should not have side effects",
         type: "MemberExpression"
       }]
     },
     {
-      code: 'const x = () => {};x(ext())',// Is currently removed by rollup even though it should not be
+      code: 'const x = () => {}; x(ext())',// Is currently removed by rollup even though it should not be
       errors: [{
         message: "Initialization code should not have side effects",
         type: "Identifier"
       }]
     },
     {
-      code: 'const x = () => {ext()};x()',
+      code: 'const x = () => {ext()}; x()',
       errors: [{
         message: "Initialization code should not have side effects",
         type: "Identifier"
