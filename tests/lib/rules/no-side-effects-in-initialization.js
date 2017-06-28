@@ -33,6 +33,7 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
     'const x = () => {}, y = () => {}; x(y())',
     'const x = () => {}, y = () => {x()}; y()',
     'const x = ext, y = () => {const x = () => {}; x()}; y()',
+    '(function () {}())',
     'export const x = {}'
   ],
 
@@ -102,6 +103,13 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
     },
     {
       code: 'const x = () => {ext()}; x()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: '(function () {ext()}())',
       errors: [{
         message: 'Could not determine side-effects of global function',
         type: 'Identifier'
