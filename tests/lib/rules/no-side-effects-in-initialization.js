@@ -14,6 +14,7 @@ RuleTester.setDefaultConfig({
  * * This generally goes for reassignments where any assignment is non-trivial
  * * Reassigning var with var is handled differently from reassigning without var
  * * Side effects in function call arguments
+ * * Consider impure functions as unknown assignments to their arguments
  */
 
 /* Before release:
@@ -34,6 +35,7 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
     'const x = () => {}, y = () => {x()}; y()',
     'const x = ext, y = () => {const x = () => {}; x()}; y()',
     '(function () {}())',
+    'var keys = Object.keys({})',
     'export const x = {}'
   ],
 
