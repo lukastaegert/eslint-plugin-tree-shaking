@@ -20,7 +20,10 @@ RuleTester.setDefaultConfig({
 /* Before release:
  * * export {..}
  * * destructuring assignment
+ * * call to class declaration
  */
+
+// next-up: side-effect-e
 
 const ruleTester = new RuleTester()
 ruleTester.run('no-side-effects-in-initialization', rule, {
@@ -114,6 +117,14 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
       code: '(function () {ext()}())',
       errors: [{
         message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'function foo () {var Object = {keys: function () {console.log( "side-effect" )}};' +
+      'var keys = Object.keys({});}foo();',
+      errors: [{
+        message: 'Could not determine side-effects of member function',
         type: 'Identifier'
       }]
     }
