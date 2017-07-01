@@ -15,15 +15,18 @@ RuleTester.setDefaultConfig({
  * * Reassigning var with var is handled differently from reassigning without var
  * * Side effects in function call arguments
  * * Consider impure functions as unknown assignments to their arguments
+ * * Creating ES6 classes is always impure
+ * * "This" expressions in constructors are only handled properly on the top level
  */
 
 /* Before release:
  * * export {..}
  * * destructuring assignment
  * * call to class declaration
+ * * shorthand object notation
  */
 
-// next-up: side-effect-e
+// next-up: side-effect-es5-classes
 
 const ruleTester = new RuleTester()
 ruleTester.run('no-side-effects-in-initialization', rule, {
@@ -32,6 +35,11 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
     'let x; x = 1',
     'let x = 1 + 2; x = 2 + 3',
     'var x = 1 + 2; var x = 2 + 3',
+    'const x = {y: 1}',
+    'const x = {["y"]: 1}',
+    'const x = {y: ext}',
+    'const x = () => {};const y = {z: x()}',
+    'const x = function(){};const y = {[x()]: 1}',
     'const x = {}; x.y = 1',
     'const x = () => {}; x()',
     'const x = () => {}, y = () => {}; x(y())',
@@ -39,7 +47,9 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
     'const x = ext, y = () => {const x = () => {}; x()}; y()',
     '(function () {}())',
     'var keys = Object.keys({})',
-    'export const x = {}'
+    'export const x = {}',
+    'function Foo(){}; const x = new Foo()',
+    'function Foo(){this.x = 1}; const x = new Foo()'
   ],
 
   invalid: [
@@ -59,6 +69,20 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
     },
     {
       code: 'ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'const x = 1 + ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'const x = ext() + 1',
       errors: [{
         message: 'Could not determine side-effects of global function',
         type: 'Identifier'
@@ -89,6 +113,27 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
       code: 'var x = () => {}; var x = ext; x()',// Is currently removed by rollup even though it should not be
       errors: [{
         message: 'Assigned expression with unknown side-effects might be called as a function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'const x = {y: ext()}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'const x = {["y"]: ext()}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'const x = {[ext()]: 1}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
         type: 'Identifier'
       }]
     },
@@ -125,6 +170,13 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
       'var keys = Object.keys({});}foo();',
       errors: [{
         message: 'Could not determine side-effects of member function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'const x = new Foo()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
         type: 'Identifier'
       }]
     }
