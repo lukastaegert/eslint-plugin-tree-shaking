@@ -27,7 +27,7 @@ RuleTester.setDefaultConfig({
  * * tests for "new" arguments
  */
 
-// next-up: side-effect-es5-classes
+// next-up: side-effect-h
 
 const ruleTester = new RuleTester()
 ruleTester.run('no-side-effects-in-initialization', rule, {
@@ -49,9 +49,10 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
     'let y;if (ext > 0) {y = 1} else {y = 2}',
     '(function () {}())',
     'var keys = Object.keys({})',
-    'export const x = {}',
     'function Foo(){}; const x = new Foo()',
-    'function Foo(){this.x = 1}; const x = new Foo()'
+    'function Foo(){this.x = 1}; const x = new Foo()',
+    'export const x = {}',
+    'export default 42'
   ],
 
   invalid: [
@@ -232,6 +233,20 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
       errors: [{
         message: 'Calling an arrow function with "new" is a side-effect',
         type: 'ArrowFunctionExpression'
+      }]
+    },
+    {
+      code: 'export const x=ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'export default ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
       }]
     }
   ]
