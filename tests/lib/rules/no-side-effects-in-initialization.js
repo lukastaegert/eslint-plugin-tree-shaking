@@ -24,6 +24,7 @@ RuleTester.setDefaultConfig({
  * * destructuring assignment
  * * call to class declaration
  * * shorthand object notation
+ * * tests for "new" arguments
  */
 
 // next-up: side-effect-es5-classes
@@ -45,6 +46,7 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
     'const x = () => {}, y = () => {}; x(y())',
     'const x = () => {}, y = () => {x()}; y()',
     'const x = ext, y = () => {const x = () => {}; x()}; y()',
+    'let y;if (ext > 0) {y = 1} else {y = 2}',
     '(function () {}())',
     'var keys = Object.keys({})',
     'export const x = {}',
@@ -96,23 +98,47 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
       }]
     },
     {
+      code: 'const x = {};x[ext()]()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }, {
+        message: 'Could not determine side-effects of member function',
+        type: 'CallExpression'
+      }]
+    },
+    {
+      code: 'const x = {};x[ext()] = 1',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'const x = {};const y = x[ext()]',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
       code: 'const x = ext; x()',
       errors: [{
-        message: 'Assigned expression with unknown side-effects might be called as a function',
+        message: 'Expression with unknown side-effects is called as a function',
         type: 'Identifier'
       }]
     },
     {
       code: 'let x = () => {}; x = ext; x()',
       errors: [{
-        message: 'Assigned expression with unknown side-effects might be called as a function',
+        message: 'Expression with unknown side-effects is called as a function',
         type: 'Identifier'
       }]
     },
     {
       code: 'var x = () => {}; var x = ext; x()',// Is currently removed by rollup even though it should not be
       errors: [{
-        message: 'Assigned expression with unknown side-effects might be called as a function',
+        message: 'Expression with unknown side-effects is called as a function',
         type: 'Identifier'
       }]
     },
@@ -141,6 +167,27 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
       code: 'const x = {y: ext}; x.y()',
       errors: [{
         message: 'Could not determine side-effects of member function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'if (ext()>0){}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'if (ext>0){ext()}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'if (ext>0){} else {ext()}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
         type: 'Identifier'
       }]
     },
@@ -178,6 +225,13 @@ ruleTester.run('no-side-effects-in-initialization', rule, {
       errors: [{
         message: 'Could not determine side-effects of global function',
         type: 'Identifier'
+      }]
+    },
+    {
+      code: 'const x=()=>{this.x = 1}; const y=new x()',
+      errors: [{
+        message: 'Calling an arrow function with "new" is a side-effect',
+        type: 'ArrowFunctionExpression'
       }]
     }
   ]
