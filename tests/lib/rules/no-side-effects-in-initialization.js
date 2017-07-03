@@ -16,17 +16,16 @@ RuleTester.setDefaultConfig({
  * * side-effects in function call arguments
  * * Consider impure functions as unknown assignments to their arguments
  * * Creating ES6 classes is always impure
- * * "This" expressions in constructors are only handled properly on the top level
+ * * "this" expressions in constructors are only handled properly on the top level
  */
 
 /* Before release:
- * * use same code for *function expressions and calls to *function references
  * * export {..}
  * * destructuring assignment
  * * call to class declaration
  * * shorthand object notation
- * * tests for "new" arguments
  * * check if rollup checks caught errors
+ * * run tests again by using rollup and checking if tree-shaking occurs
  */
 
 // next-up: side-effect-h
@@ -235,21 +234,21 @@ describe('CallExpression', () => {
       {
         code: 'const x = ext; x()',
         errors: [{
-          message: 'Expression with unknown side-effects is possibly called as a function',
+          message: 'Could not determine side-effects of global function',
           type: 'Identifier'
         }]
       },
       {
         code: 'let x = ()=>{}; x = ext; x()',
         errors: [{
-          message: 'Expression with unknown side-effects is possibly called as a function',
+          message: 'Could not determine side-effects of global function',
           type: 'Identifier'
         }]
       },
       {
         code: 'var x = ()=>{}; var x = ext; x()',
         errors: [{
-          message: 'Expression with unknown side-effects is possibly called as a function',
+          message: 'Could not determine side-effects of global function',
           type: 'Identifier'
         }]
       },
@@ -261,16 +260,37 @@ describe('CallExpression', () => {
         }]
       },
       {
+        code: 'const x = ()=>{ext = 1}; x(); x(); x()',
+        errors: [{
+          message: 'Assignment to a global variable is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'function x(){ext()}; x()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'function x(){ext = 1}; x(); x(); x()',
+        errors: [{
+          message: 'Assignment to a global variable is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
         code: 'let x = ()=>{}; const y = ()=>{x()}; x = ext; y()',
         errors: [{
-          message: 'Expression with unknown side-effects is possibly called as a function',
+          message: 'Could not determine side-effects of global function',
           type: 'Identifier'
         }]
       },
       {
         code: 'var x = ()=>{}; const y = ()=>{x()}; var x = ext; y()',
         errors: [{
-          message: 'Expression with unknown side-effects is possibly called as a function',
+          message: 'Could not determine side-effects of global function',
           type: 'Identifier'
         }]
       },
@@ -307,6 +327,25 @@ describe('CallExpression', () => {
         errors: [{
           message: 'Assignment to a member of an unknown this value is a side-effect',
           type: 'Identifier'
+        }]
+      },
+    ]
+  }))
+
+  describe('callee is Other', testRule({
+    invalid: [
+      {
+        code: '3()',
+        errors: [{
+          message: 'Expression with unknown side-effects might be called as a function',
+          type: 'Literal'
+        }]
+      },
+      {
+        code: 'const x = 3; x()',
+        errors: [{
+          message: 'Expression with unknown side-effects might be called as a function',
+          type: 'Literal'
         }]
       },
     ]
@@ -450,7 +489,7 @@ describe('NewExpression', testRule({
   ],
   invalid: [
     {
-      code: 'const x = new ext()',
+      code: 'new ext()',
       errors: [{
         message: 'Could not determine side-effects of global function',
         type: 'Identifier'
@@ -464,10 +503,38 @@ describe('NewExpression', testRule({
       }]
     },
     {
-      code: 'const x=()=>{}; const y=new x()',
+      code: 'const x=()=>{}; new x()',
       errors: [{
         message: 'Calling an arrow function with "new" is a side-effect',
         type: 'ArrowFunctionExpression'
+      }]
+    },
+    {
+      code: 'function x(){}; new x(ext())',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'function x(a){a()}; new x(ext)',
+      errors: [{
+        message: 'Calling a function parameter is considered a side-effect',
+        type: 'FunctionDeclaration'
+      }]
+    },
+    {
+      code: 'function x(){ext()}; new x()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'function x(){ext = 1}; new x(); new x(); new x()',
+      errors: [{
+        message: 'Assignment to a global variable is a side-effect',
+        type: 'Identifier'
       }]
     },
   ]
