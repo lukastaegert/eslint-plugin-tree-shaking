@@ -20,7 +20,6 @@ RuleTester.setDefaultConfig({
  */
 
 /* Before release:
- * * export {..}
  * * destructuring assignment
  * * call to class declaration
  * * shorthand object notation
@@ -30,6 +29,7 @@ RuleTester.setDefaultConfig({
 
 // next-up: side-effect-h/i
 // next-up: side-effect-k
+// next-up: ES5 choice
 
 const ruleTester = new RuleTester()
 
@@ -175,6 +175,12 @@ describe('BlockStatement', testRule({
   ]
 }))
 
+describe('BreakStatement', testRule({
+  valid: [
+    'while(true){break}',
+  ]
+}))
+
 describe('CallExpression', testRule({
   valid: [
     '(a=>{const y = a})(ext, ext)',
@@ -200,6 +206,24 @@ describe('CallExpression', testRule({
       errors: [{
         message: 'Could not determine side-effects of global function',
         type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
+describe('ContinueStatement', testRule({
+  valid: [
+    'while(true){continue}',
+  ]
+}))
+
+describe('DebuggerStatement', testRule({
+  invalid: [
+    {
+      code: 'debugger',
+      errors: [{
+        message: 'Debugger statements are side-effects',
+        type: 'DebuggerStatement'
       }]
     },
   ]
@@ -248,6 +272,50 @@ describe('ExpressionStatement', testRule({
   invalid: [
     {
       code: 'ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
+describe('ForStatement', testRule({
+  valid: [
+    'for(let i = 0; i < 3; i++){i++}',
+    'for(;;){}',
+  ],
+  invalid: [
+    {
+      code: 'for(ext();;){}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'for(;ext();){}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'for(;true;ext()){}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'for(;true;) ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'for(;true;){ext()}',
       errors: [{
         message: 'Could not determine side-effects of global function',
         type: 'Identifier'
@@ -506,6 +574,21 @@ describe('IfStatement', testRule({
   ]
 }))
 
+describe('LabeledStatement', testRule({
+  valid: [
+    'loop: for(;true;){continue loop}',
+  ],
+  invalid: [
+    {
+      code: 'loop: for(;true;){ext()}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
 describe('Literal', testRule({
   valid: [
     '3',
@@ -631,6 +714,22 @@ describe('ObjectExpression', testRule({
   ]
 }))
 
+describe('ReturnStatement', testRule({
+  valid: [
+    '(()=>{return})()',
+    '(()=>{return 1})()',
+  ],
+  invalid: [
+    {
+      code: '(()=>{return ext()})()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
 describe('ThisExpression', testRule({
   valid: [
     'this.x',
@@ -656,6 +755,29 @@ describe('UnaryExpression', testRule({
   invalid: [
     {
       code: '!ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
+describe('UpdateExpression', testRule({
+  valid: [
+    'let x=1;x++',
+    'const x={};x.y++',
+  ],
+  invalid: [
+    {
+      code: 'ext++',
+      errors: [{
+        message: 'Assignment to a global variable is a side-effect',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'const x={};x[ext()]++',
       errors: [{
         message: 'Could not determine side-effects of global function',
         type: 'Identifier'
