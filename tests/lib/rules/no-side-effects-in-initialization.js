@@ -28,7 +28,8 @@ RuleTester.setDefaultConfig({
  * * run tests again by using rollup and checking if tree-shaking occurs
  */
 
-// next-up: side-effect-h
+// next-up: side-effect-h/i
+// next-up: side-effect-k
 
 const ruleTester = new RuleTester()
 
@@ -36,11 +37,50 @@ const testRule = ({valid = [], invalid = []}) => () => {
   ruleTester.run('no-side-effects-in-initialization', rule, {valid, invalid})
 }
 
-describe('ArrowFunctionExpression', testRule({
-  valid: [
-    'const x = () => {}',
-  ]
-}))
+describe('ArrowFunctionExpression', () => {
+  testRule({
+    valid: [
+      'a=>{a(); ext()}',
+    ]
+  })()
+
+  describe('when called', testRule({
+    valid: [
+      '(()=>{})()',
+      'new (function (){(()=>{this.y = 1})()})()',
+    ],
+    invalid: [
+      {
+        code: '(()=>{ext()})()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'new (()=>{})()',
+        errors: [{
+          message: 'Calling an arrow function with "new" is a side-effect',
+          type: 'ArrowFunctionExpression'
+        }]
+      },
+      {
+        code: '(a=>{a()})(ext)',
+        errors: [{
+          message: 'Calling a function parameter is considered a side-effect',
+          type: 'ArrowFunctionExpression'
+        }]
+      },
+      {
+        code: '(()=>{this.x = 1})()',
+        errors: [{
+          message: 'Assignment to a member of an unknown this value is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+    ]
+  }))
+})
 
 describe('AssignmentExpression', testRule({
   valid: [
@@ -106,7 +146,9 @@ describe('BinaryExpression', testRule({
 
 describe('BlockStatement', testRule({
   valid: [
-    '{const x = 1}'
+    '{}',
+    'const x=()=>{};{const x=ext}x()',
+    'const x=ext;{const x=()=>{}; x()}',
   ],
   invalid: [
     {
@@ -116,241 +158,52 @@ describe('BlockStatement', testRule({
         type: 'Identifier'
       }]
     },
+    {
+      code: 'var x=()=>{};{var x=ext}x()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'var x=ext;{x(); var x=()=>{}}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
   ]
 }))
 
-describe('CallExpression', () => {
-  describe('callee is MemberExpression', testRule({
-    valid: [
-      'const x = Object.keys({})',
-    ],
-    invalid: [
-      {
-        code: 'ext.x()',
-        errors: [{
-          message: 'Could not determine side-effects of member function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'const x = {}; x.y()',
-        errors: [{
-          message: 'Could not determine side-effects of member function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'const Object = {}; const x = Object.keys({})',
-        errors: [{
-          message: 'Could not determine side-effects of member function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'const x = {}; x[ext()]()',
-        errors: [{
-          message: 'Could not determine side-effects of global function',
-          type: 'Identifier'
-        }, {
-          message: 'Could not determine side-effects of member function',
-          type: 'CallExpression'
-        }]
-      },
-    ]
-  }))
-
-  describe('callee is FunctionExpression', testRule({
-    valid: [
-      '(function (){}())',
-    ],
-    invalid: [
-      {
-        code: '(function (){ext()}())',
-        errors: [{
-          message: 'Could not determine side-effects of global function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: '(function (){this.x = 1}())',
-        errors: [{
-          message: 'Assignment to a member of an unknown this value is a side-effect',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'const x = new (function (){(function(){this.y = 1}())})()',
-        errors: [{
-          message: 'Assignment to a member of an unknown this value is a side-effect',
-          type: 'Identifier'
-        }]
-      },
-    ]
-  }))
-
-  describe('callee is ArrowFunctionExpression', testRule({
-    valid: [
-      '(()=>{})()',
-      'const x = new (function (){(()=>{this.y = 1})()})()',
-    ],
-    invalid: [
-      {
-        code: '(()=>{ext()})()',
-        errors: [{
-          message: 'Could not determine side-effects of global function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: '(()=>{this.x = 1})()',
-        errors: [{
-          message: 'Assignment to a member of an unknown this value is a side-effect',
-          type: 'Identifier'
-        }]
-      },
-    ]
-  }))
-
-  describe('callee is Identifier', testRule({
-    valid: [
-      'const x = ()=>{}; x()',
-      'function x(){}; x()',
-      'let x = ()=>{};x = ()=>{}; x()',
-      'var x = ()=>{};var x = ()=>{}; x()',
-      'const x = ()=>{}; x(ext)',
-      'const x = ()=>{}, y = ()=>{}; x(y())',
-      'const x = ()=>{}, y = ()=>{x()}; y()',
-      'const x = ext, y = ()=>{const x = ()=>{}; x()}; y()',
-      'const x = new (function (){const x =()=>{this.z = 1};x()})()',
-    ],
-    invalid: [
-      {
-        code: 'ext()',
-        errors: [{
-          message: 'Could not determine side-effects of global function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'const x = ext; x()',
-        errors: [{
-          message: 'Could not determine side-effects of global function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'let x = ()=>{}; x = ext; x()',
-        errors: [{
-          message: 'Could not determine side-effects of global function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'var x = ()=>{}; var x = ext; x()',
-        errors: [{
-          message: 'Could not determine side-effects of global function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'const x = ()=>{ext()}; x()',
-        errors: [{
-          message: 'Could not determine side-effects of global function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'const x = ()=>{ext = 1}; x(); x(); x()',
-        errors: [{
-          message: 'Assignment to a global variable is a side-effect',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'function x(){ext()}; x()',
-        errors: [{
-          message: 'Could not determine side-effects of global function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'function x(){ext = 1}; x(); x(); x()',
-        errors: [{
-          message: 'Assignment to a global variable is a side-effect',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'let x = ()=>{}; const y = ()=>{x()}; x = ext; y()',
-        errors: [{
-          message: 'Could not determine side-effects of global function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'var x = ()=>{}; const y = ()=>{x()}; var x = ext; y()',
-        errors: [{
-          message: 'Could not determine side-effects of global function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'const x = a=>{a()}; x(ext)',
-        errors: [{
-          message: 'Calling a function parameter is considered a side-effect',
-          type: 'ArrowFunctionExpression'
-        }]
-      },
-      {
-        code: 'const x = ()=>{}; x(ext())',
-        errors: [{
-          message: 'Could not determine side-effects of global function',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'function x(){this.x = 1}; x()',
-        errors: [{
-          message: 'Assignment to a member of an unknown this value is a side-effect',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'const x = ()=>{this.x = 1}; x()',
-        errors: [{
-          message: 'Assignment to a member of an unknown this value is a side-effect',
-          type: 'Identifier'
-        }]
-      },
-      {
-        code: 'const x = new (function (){const y = function(){this.z = 1}; y()})()',
-        errors: [{
-          message: 'Assignment to a member of an unknown this value is a side-effect',
-          type: 'Identifier'
-        }]
-      },
-    ]
-  }))
-
-  describe('callee is Other', testRule({
-    invalid: [
-      {
-        code: '3()',
-        errors: [{
-          message: 'Expression with unknown side-effects might be called as a function',
-          type: 'Literal'
-        }]
-      },
-      {
-        code: 'const x = 3; x()',
-        errors: [{
-          message: 'Expression with unknown side-effects might be called as a function',
-          type: 'Literal'
-        }]
-      },
-    ]
-  }))
-})
+describe('CallExpression', testRule({
+  valid: [
+    '(a=>{const y = a})(ext, ext)',
+    'const x = ()=>{}, y = ()=>{}; x(y())',
+  ],
+  invalid: [
+    {
+      code: '3()',
+      errors: [{
+        message: 'Expression with unknown side-effects might be called as a function',
+        type: 'Literal'
+      }]
+    },
+    {
+      code: '(()=>{})(ext(), 1)',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: '(()=>{})(1, ext())',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
 
 describe('EmptyStatement', testRule({
   valid: [
@@ -403,23 +256,216 @@ describe('ExpressionStatement', testRule({
   ]
 }))
 
-describe('FunctionDeclaration', testRule({
-  valid: [
-    'function x(){ext()}',
-  ]
-}))
+describe('FunctionDeclaration', () => {
+  testRule({
+    valid: [
+      'function x(a){a(); ext()}',
+    ]
+  })()
 
-describe('FunctionExpression', testRule({
-  valid: [
-    '(function (){ext()})',
-  ]
-}))
+  describe('when called', testRule({
+    valid: [
+      'function x(){}; x()',
+      'function x(){this.y = 1}; new x()',
+      'function x(){if (ext > 0){this.y = 1}}; new x()',
+    ],
+    invalid: [
+      {
+        code: 'function x(){ext()}; x()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'function x(){ext()}; new x()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'function x(a){a()}; x(ext)',
+        errors: [{
+          message: 'Calling a function parameter is considered a side-effect',
+          type: 'FunctionDeclaration'
+        }]
+      },
+      {
+        code: 'function x(a){a()}; new x(ext)',
+        errors: [{
+          message: 'Calling a function parameter is considered a side-effect',
+          type: 'FunctionDeclaration'
+        }]
+      },
+      {
+        code: 'function x(){this.y = 1}; x()',
+        errors: [{
+          message: 'Assignment to a member of an unknown this value is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'new (function (){function x(){this.y = 1}; x()})()',
+        errors: [{
+          message: 'Assignment to a member of an unknown this value is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'function x(){ext = 1}; x(); x(); x()',
+        errors: [{
+          message: 'Assignment to a global variable is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'function x(){ext = 1}; new x(); new x(); new x()',
+        errors: [{
+          message: 'Assignment to a global variable is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+    ]
+  }))
+})
 
-describe('Identifier', testRule({
-  valid: [
-    'var x;x',
-  ]
-}))
+describe('FunctionExpression', () => {
+  testRule({
+    valid: [
+      '(function (a){a(); ext()})',
+    ]
+  })()
+
+  describe('when called', testRule({
+    valid: [
+      '(function (){}())',
+      'new (function (){this.x = 1})()',
+      'new (function (){if (ext > 0){this.x = 1}})()',
+    ],
+    invalid: [
+      {
+        code: '(function (){ext()}())',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'new (function (){ext()})()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: '(function (a){a()}(ext))',
+        errors: [{
+          message: 'Calling a function parameter is considered a side-effect',
+          type: 'FunctionExpression'
+        }]
+      },
+      {
+        code: 'new (function (a){a()})(ext)',
+        errors: [{
+          message: 'Calling a function parameter is considered a side-effect',
+          type: 'FunctionExpression'
+        }]
+      },
+      {
+        code: '(function (){this.x = 1}())',
+        errors: [{
+          message: 'Assignment to a member of an unknown this value is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'new (function (){(function(){this.y = 1}())})()',
+        errors: [{
+          message: 'Assignment to a member of an unknown this value is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+    ]
+  }))
+})
+
+describe('Identifier', () => {
+  testRule({
+    valid: [
+      'var x;x',
+    ]
+  })()
+
+  describe('when called', testRule({
+    valid: [
+      'const x = ()=>{}; x(ext)',
+      'function x(){}; x(ext)',
+      'let x = ()=>{};x = ()=>{}; x(ext)',
+      'var x = ()=>{};var x = ()=>{}; x(ext)',
+      'const x = ()=>{}, y = ()=>{x()}; y()',
+      'const x = ext, y = ()=>{const x = ()=>{}; x()}; y()',
+    ],
+    invalid: [
+      {
+        code: 'ext()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'const x = ext; x()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'let x = ()=>{}; x = ext; x()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'var x = ()=>{}; var x = ext; x()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'const x = ()=>{ext()}; x()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'const x = ()=>{ext = 1}; x(); x(); x()',
+        errors: [{
+          message: 'Assignment to a global variable is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'let x = ()=>{}; const y = ()=>{x()}; x = ext; y()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'var x = ()=>{}; const y = ()=>{x()}; var x = ext; y()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+    ]
+  }))
+})
 
 describe('IfStatement', testRule({
   valid: [
@@ -466,25 +512,66 @@ describe('Literal', testRule({
   ]
 }))
 
-describe('MemberExpression', testRule({
-  valid: [
-    'const x = ext.y',
-    'const x = ext["y"]',
-  ],
-  invalid: [
-    {
-      code: 'const x = {};const y = x[ext()]',
-      errors: [{
-        message: 'Could not determine side-effects of global function',
-        type: 'Identifier'
-      }]
-    },
-  ]
-}))
+describe('MemberExpression', () => {
+  testRule({
+    valid: [
+      'const x = ext.y',
+      'const x = ext["y"]',
+    ],
+    invalid: [
+      {
+        code: 'const x = {};const y = x[ext()]',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+    ]
+  })()
+
+  describe('when called', testRule({
+    valid: [
+      'const x = Object.keys({})',
+    ],
+    invalid: [
+      {
+        code: 'ext.x()',
+        errors: [{
+          message: 'Could not determine side-effects of member function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'const x = {}; x.y()',
+        errors: [{
+          message: 'Could not determine side-effects of member function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'const Object = {}; const x = Object.keys({})',
+        errors: [{
+          message: 'Could not determine side-effects of member function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'const x = {}; x[ext()]()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }, {
+          message: 'Could not determine side-effects of member function',
+          type: 'CallExpression'
+        }]
+      },
+    ]
+  }))
+})
 
 describe('NewExpression', testRule({
   valid: [
-    'new (function (){this.x = 1})()',
+    'new (function (){this.x = 1})()',//
     'function x(){this.y = 1}; const z = new x()',
   ],
   invalid: [
@@ -507,34 +594,6 @@ describe('NewExpression', testRule({
       errors: [{
         message: 'Calling an arrow function with "new" is a side-effect',
         type: 'ArrowFunctionExpression'
-      }]
-    },
-    {
-      code: 'function x(){}; new x(ext())',
-      errors: [{
-        message: 'Could not determine side-effects of global function',
-        type: 'Identifier'
-      }]
-    },
-    {
-      code: 'function x(a){a()}; new x(ext)',
-      errors: [{
-        message: 'Calling a function parameter is considered a side-effect',
-        type: 'FunctionDeclaration'
-      }]
-    },
-    {
-      code: 'function x(){ext()}; new x()',
-      errors: [{
-        message: 'Could not determine side-effects of global function',
-        type: 'Identifier'
-      }]
-    },
-    {
-      code: 'function x(){ext = 1}; new x(); new x(); new x()',
-      errors: [{
-        message: 'Assignment to a global variable is a side-effect',
-        type: 'Identifier'
       }]
     },
   ]
@@ -654,6 +713,37 @@ describe('VariableDeclarator', testRule({
         message: 'Could not determine side-effects of global function',
         type: 'Identifier'
       }, {
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
+describe('WhileStatement', testRule({
+  valid: [
+    'while(true){}',
+    'while(ext > 0){}',
+    'const x = ()=>{}; while(true)x()',
+  ],
+  invalid: [
+    {
+      code: 'while(ext()){}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'while(true)ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'while(true){ext()}',
+      errors: [{
         message: 'Could not determine side-effects of global function',
         type: 'Identifier'
       }]
