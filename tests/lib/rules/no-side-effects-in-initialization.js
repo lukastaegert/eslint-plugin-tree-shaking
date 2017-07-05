@@ -29,13 +29,37 @@ RuleTester.setDefaultConfig({
 
 // next-up: side-effect-h/i
 // next-up: side-effect-k
-// next-up: ES5 choice
+// next-up: LogicalExpression
 
 const ruleTester = new RuleTester()
 
 const testRule = ({valid = [], invalid = []}) => () => {
   ruleTester.run('no-side-effects-in-initialization', rule, {valid, invalid})
 }
+
+describe('ArrayExpression', testRule({
+  valid: [
+    '[]',
+    '[ext,ext]',
+    '[1,,2,]',
+  ],
+  invalid: [
+    {
+      code: '[ext()]',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: '[,,ext(),]',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
 
 describe('ArrowFunctionExpression', () => {
   testRule({
@@ -85,6 +109,7 @@ describe('ArrowFunctionExpression', () => {
 describe('AssignmentExpression', testRule({
   valid: [
     'var x;x = 1',
+    'var x;x += 1',
     'const x = {}; x.y = 1',
     'const x = {}; x["y"] = 1',
     'const x = {}, y = ()=>{}; x[y()] = 1',
@@ -93,6 +118,13 @@ describe('AssignmentExpression', testRule({
   invalid: [
     {
       code: 'ext = 1',
+      errors: [{
+        message: 'Assignment to a global variable is a side-effect',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'ext += 1',
       errors: [{
         message: 'Assignment to a global variable is a side-effect',
         type: 'Identifier'
@@ -211,6 +243,30 @@ describe('CallExpression', testRule({
   ]
 }))
 
+describe('CatchClause', testRule({
+  valid: [
+    'try {} catch (error) {}',
+    'const x=()=>{}; try {} catch (error) {const x=ext}; x()',
+    'const x=ext; try {} catch (error) {const x=()=>{}; x()}',
+  ],
+  invalid: [
+    {
+      code: 'try {} catch (error) {ext()}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'var x=()=>{}; try {} catch (error) {var x=ext}; x()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
 describe('ContinueStatement', testRule({
   valid: [
     'while(true){continue}',
@@ -224,6 +280,37 @@ describe('DebuggerStatement', testRule({
       errors: [{
         message: 'Debugger statements are side-effects',
         type: 'DebuggerStatement'
+      }]
+    },
+  ]
+}))
+
+describe('DoWhileStatement', testRule({
+  valid: [
+    'do {} while(true)',
+    'do {} while(ext > 0)',
+    'const x = ()=>{}; do x(); while(true)',
+  ],
+  invalid: [
+    {
+      code: 'do {} while(ext())',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'do ext(); while(true)',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'do {ext()} while(true)',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
       }]
     },
   ]
@@ -272,6 +359,43 @@ describe('ExpressionStatement', testRule({
   invalid: [
     {
       code: 'ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
+describe('ForInStatement', testRule({
+  valid: [
+    'for(const x in ext){x = 1}',
+    'let x; for(x in ext){}',
+  ],
+  invalid: [
+    {
+      code: 'for(ext in {a: 1}){}',
+      errors: [{
+        message: 'Assignment to a global variable is a side-effect',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'for(const x in ext()){}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'for(const x in {a: 1}){ext()}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'for(const x in {a: 1}) ext()',
       errors: [{
         message: 'Could not determine side-effects of global function',
         type: 'Identifier'
@@ -686,8 +810,6 @@ describe('ObjectExpression', testRule({
   valid: [
     'const x = {y: ext}',
     'const x = {["y"]: ext}',
-    'const x = ()=>{};const y = {z: x()}',
-    'const x = ()=>{};const y = {[x()]: ext}',
   ],
   invalid: [
     {
@@ -730,6 +852,52 @@ describe('ReturnStatement', testRule({
   ]
 }))
 
+describe('SwitchCase', testRule({
+  valid: [
+    'switch(ext){case ext:const x = 1;break;default:}',
+  ],
+  invalid: [
+    {
+      code: 'switch(ext){case ext():}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'switch(ext){case 1:ext()}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
+describe('SwitchStatement', testRule({
+  valid: [
+    'switch(ext){}',
+    'const x=()=>{}; switch(ext){case 1:const x=ext}; x()',
+    'const x=ext; switch(ext){case 1:const x=()=>{}; x()}',
+  ],
+  invalid: [
+    {
+      code: 'switch(ext()){}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'var x=()=>{}; switch(ext){case 1:var x=ext}; x()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
 describe('ThisExpression', testRule({
   valid: [
     'this.x',
@@ -743,6 +911,30 @@ describe('ThrowStatement', testRule({
       errors: [{
         message: 'Throwing an error is a side-effect',
         type: 'ThrowStatement'
+      }]
+    },
+  ]
+}))
+
+describe('TryStatement', testRule({
+  valid: [
+    'try {} catch (error) {}',
+    'try {} finally {}',
+    'try {} catch (error) {} finally {}',
+  ],
+  invalid: [
+    {
+      code: 'try {ext()} catch (error) {}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'try {} finally {ext()}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
       }]
     },
   ]
