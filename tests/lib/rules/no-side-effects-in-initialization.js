@@ -17,13 +17,15 @@ RuleTester.setDefaultConfig({
  * * Consider impure functions as unknown assignments to their arguments
  * * Creating ES6 classes is always impure
  * * "this" expressions in constructors are only handled properly on the top level
+ * * If a global object or parameter is assigned as a member to an object, it can be freely
+ *   mutated (also wrong here); to fix this, we could store a data structure for each variable
+ *   noting "do-not-mutate" and "do-not-mutate-any-members" nodes
  */
 
 /* Before release:
  * * destructuring assignment
  * * call to class declaration
  * * shorthand object notation
- * * check if rollup checks caught errors
  * * run tests again by using rollup and checking if tree-shaking occurs
  */
 
@@ -64,14 +66,13 @@ describe('ArrayExpression', testRule({
 describe('ArrowFunctionExpression', () => {
   testRule({
     valid: [
-      'a=>{a(); ext()}',
+      'a=>{a(); ext()}'
     ]
   })()
 
   describe('when called', testRule({
     valid: [
-      '(()=>{})()',
-      'new (function (){(()=>{this.y = 1})()})()',
+      '(()=>{})()'
     ],
     invalid: [
       {
@@ -92,16 +93,29 @@ describe('ArrowFunctionExpression', () => {
         code: '(a=>{a()})(ext)',
         errors: [{
           message: 'Calling a function parameter is considered a side-effect',
-          type: 'ArrowFunctionExpression'
-        }]
-      },
-      {
-        code: '(()=>{this.x = 1})()',
-        errors: [{
-          message: 'Assignment to a member of an unknown this value is a side-effect',
           type: 'Identifier'
         }]
       },
+      {
+        code: '(a=>{a.x = 1})(ext)',
+        errors: [{
+          message: 'Mutating a function parameter is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: '(a=>{const b = a;b.x = 1})(ext)',
+        errors: [{
+          message: 'Mutating a function parameter is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+    ]
+  }))
+
+  describe('when mutated', testRule( {
+    valid: [
+      'const x = ()=>{}; x.y = 1'
     ]
   }))
 })
@@ -133,7 +147,7 @@ describe('AssignmentExpression', testRule({
     {
       code: 'ext.x = 1',
       errors: [{
-        message: 'Assignment to a member of a global variable is a side-effect',
+        message: 'Mutating a global variable is a side-effect',
         type: 'Identifier'
       }]
     },
@@ -147,8 +161,8 @@ describe('AssignmentExpression', testRule({
     {
       code: 'this.x = 1',
       errors: [{
-        message: 'Assignment to a member of an unknown this value is a side-effect',
-        type: 'Identifier'
+        message: 'Mutating an unknown this value is a side-effect',
+        type: 'ThisExpression'
       }]
     },
   ]
@@ -458,8 +472,6 @@ describe('FunctionDeclaration', () => {
   describe('when called', testRule({
     valid: [
       'function x(){}; x()',
-      'function x(){this.y = 1}; new x()',
-      'function x(){if (ext > 0){this.y = 1}}; new x()',
     ],
     invalid: [
       {
@@ -480,27 +492,27 @@ describe('FunctionDeclaration', () => {
         code: 'function x(a){a()}; x(ext)',
         errors: [{
           message: 'Calling a function parameter is considered a side-effect',
-          type: 'FunctionDeclaration'
-        }]
-      },
-      {
-        code: 'function x(a){a()}; new x(ext)',
-        errors: [{
-          message: 'Calling a function parameter is considered a side-effect',
-          type: 'FunctionDeclaration'
-        }]
-      },
-      {
-        code: 'function x(){this.y = 1}; x()',
-        errors: [{
-          message: 'Assignment to a member of an unknown this value is a side-effect',
           type: 'Identifier'
         }]
       },
       {
-        code: 'new (function (){function x(){this.y = 1}; x()})()',
+        code: 'function x(a){a(); a(); a()}; x(ext)',
         errors: [{
-          message: 'Assignment to a member of an unknown this value is a side-effect',
+          message: 'Calling a function parameter is considered a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'function x(a){a.y = 1}; x(ext)',
+        errors: [{
+          message: 'Mutating a function parameter is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'function x(a){a.y = 1; a.y = 2; a.y = 3}; x(ext)',
+        errors: [{
+          message: 'Mutating a function parameter is a side-effect',
           type: 'Identifier'
         }]
       },
@@ -520,6 +532,12 @@ describe('FunctionDeclaration', () => {
       },
     ]
   }))
+
+  describe('when mutated', testRule({
+    valid: [
+      'function x(){}; x.y = 1'
+    ]
+  }))
 })
 
 describe('FunctionExpression', () => {
@@ -532,8 +550,6 @@ describe('FunctionExpression', () => {
   describe('when called', testRule({
     valid: [
       '(function (){}())',
-      'new (function (){this.x = 1})()',
-      'new (function (){if (ext > 0){this.x = 1}})()',
     ],
     invalid: [
       {
@@ -554,27 +570,20 @@ describe('FunctionExpression', () => {
         code: '(function (a){a()}(ext))',
         errors: [{
           message: 'Calling a function parameter is considered a side-effect',
-          type: 'FunctionExpression'
-        }]
-      },
-      {
-        code: 'new (function (a){a()})(ext)',
-        errors: [{
-          message: 'Calling a function parameter is considered a side-effect',
-          type: 'FunctionExpression'
-        }]
-      },
-      {
-        code: '(function (){this.x = 1}())',
-        errors: [{
-          message: 'Assignment to a member of an unknown this value is a side-effect',
           type: 'Identifier'
         }]
       },
       {
-        code: 'new (function (){(function(){this.y = 1}())})()',
+        code: '(function (a){a.x = 1}(ext))',
         errors: [{
-          message: 'Assignment to a member of an unknown this value is a side-effect',
+          message: 'Mutating a function parameter is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: '(function (a){const b = a;b.x = 1}(ext))',
+        errors: [{
+          message: 'Mutating a function parameter is a side-effect',
           type: 'Identifier'
         }]
       },
@@ -657,6 +666,42 @@ describe('Identifier', () => {
       },
     ]
   }))
+
+  describe('when mutated', testRule({
+    valid: [
+      'const x = {}; x.y = ext',
+    ],
+    invalid: [
+      {
+        code: 'var x = ext; x.y = 1',
+        errors: [{
+          message: 'Mutating a global variable is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'var x = {}; x = ext; x.y = 1',
+        errors: [{
+          message: 'Mutating a global variable is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'var x = {}; var x = ext; x.y = 1',
+        errors: [{
+          message: 'Mutating a global variable is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'var x = {}; x = ext; x.y = 1; x.y = 1; x.y = 1',
+        errors: [{
+          message: 'Mutating a global variable is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+    ]
+  }))
 })
 
 describe('IfStatement', testRule({
@@ -716,6 +761,7 @@ describe('LabeledStatement', testRule({
 describe('Literal', testRule({
   valid: [
     '3',
+    'const x = 3; x.y = 1',
   ]
 }))
 
@@ -774,6 +820,36 @@ describe('MemberExpression', () => {
       },
     ]
   }))
+
+  describe('when mutated', testRule({
+    valid: [
+      'const x = {};x.y = ext',
+      'const x = {y: ext};delete x.y',
+    ],
+    invalid: [
+      {
+        code: 'const x = {y:{}};x.y.z = ext',
+        errors: [{
+          message: 'Mutating members of an object is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'const x = {y:ext};const y = x.y; y.z = 1',
+        errors: [{
+          message: 'Mutating members of an object is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'const x = {y: ext};delete x.y.z',
+        errors: [{
+          message: 'Mutating members of an object is a side-effect',
+          type: 'Identifier'
+        }]
+      },
+    ]
+  }))
 })
 
 describe('NewExpression', testRule({
@@ -810,6 +886,7 @@ describe('ObjectExpression', testRule({
   valid: [
     'const x = {y: ext}',
     'const x = {["y"]: ext}',
+    'const x = {};x.y = ext',
   ],
   invalid: [
     {
@@ -898,11 +975,59 @@ describe('SwitchStatement', testRule({
   ]
 }))
 
-describe('ThisExpression', testRule({
-  valid: [
-    'this.x',
-  ]
-}))
+describe('ThisExpression', () => {
+  testRule({
+    valid: [
+      'this.x',
+    ]
+  })()
+
+  describe('when mutated', testRule({
+    valid: [
+      'new (function (){this.x = 1})()',
+      'new (function (){{this.x = 1}})()',
+      'new (function (){(()=>{this.x = 1})()})()',
+      'function x(){this.y = 1}; new x()',
+    ],
+    invalid: [
+      {
+        code: 'this.x = 1',
+        errors: [{
+          message: 'Mutating an unknown this value is a side-effect',
+          type: 'ThisExpression'
+        }]
+      },
+      {
+        code: '(()=>{this.x = 1})()',
+        errors: [{
+          message: 'Mutating an unknown this value is a side-effect',
+          type: 'ThisExpression'
+        }]
+      },
+      {
+        code: '(function(){this.x = 1}())',
+        errors: [{
+          message: 'Mutating an unknown this value is a side-effect',
+          type: 'ThisExpression'
+        }]
+      },
+      {
+        code: 'new (function (){(function(){this.x = 1}())})()',
+        errors: [{
+          message: 'Mutating an unknown this value is a side-effect',
+          type: 'ThisExpression'
+        }]
+      },
+      {
+        code: 'function x(){this.y = 1}; x()',
+        errors: [{
+          message: 'Mutating an unknown this value is a side-effect',
+          type: 'ThisExpression'
+        }]
+      },
+    ]
+  }))
+})
 
 describe('ThrowStatement', testRule({
   invalid: [
@@ -940,15 +1065,31 @@ describe('TryStatement', testRule({
   ]
 }))
 
-describe('UnaryExpression', testRule({
+describe('UnaryExpression', () => testRule({
   valid: [
     '!ext',
+    'const x = {};delete x.y',
+    'const x = {};delete x["y"]',
   ],
   invalid: [
     {
       code: '!ext()',
       errors: [{
         message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'delete ext.x',
+      errors: [{
+        message: 'Mutating a global variable is a side-effect',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'delete ext["x"]',
+      errors: [{
+        message: 'Mutating a global variable is a side-effect',
         type: 'Identifier'
       }]
     },
