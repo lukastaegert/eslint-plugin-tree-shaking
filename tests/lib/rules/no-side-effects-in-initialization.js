@@ -29,10 +29,6 @@ RuleTester.setDefaultConfig({
  * * run tests again by using rollup and checking if tree-shaking occurs
  */
 
-// next-up: side-effect-h/i
-// next-up: side-effect-k
-// next-up: LogicalExpression
-
 const ruleTester = new RuleTester()
 
 const testRule = ({valid = [], invalid = []}) => () => {
@@ -113,7 +109,7 @@ describe('ArrowFunctionExpression', () => {
     ]
   }))
 
-  describe('when mutated', testRule( {
+  describe('when mutated', testRule({
     valid: [
       'const x = ()=>{}; x.y = 1'
     ]
@@ -171,6 +167,7 @@ describe('AssignmentExpression', testRule({
 describe('BinaryExpression', testRule({
   valid: [
     '1 + 2',
+    'if (1-1) ext()',
   ],
   invalid: [
     {
@@ -280,6 +277,78 @@ describe('CatchClause', testRule({
     },
   ]
 }))
+
+describe('ConditionalExpression', () => {
+  testRule({
+    valid: [
+      'ext ? 1 : 2',
+      'true ? 1 : ext()',
+      'false ? ext() : 2',
+      'if (true ? false : true) ext()',
+    ],
+    invalid: [
+      {
+        code: 'ext() ? 1 : 2',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'ext ? ext() : 2',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'ext ? 1 : ext()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'if (false ? false : true) ext()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+    ]
+  })()
+
+  describe('when called', testRule({
+    valid: [
+      'const x = ()=>{}, y = ()=>{};(ext ? x : y)()',
+      'const x = ()=>{}; (true ? x : ext)()',
+      'const x = ()=>{}; (false ? ext : x)()',
+    ],
+    invalid: [
+      {
+        code: 'const x = ()=>{}; (true ? ext : x)()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'const x = ()=>{}; (false ? x : ext)()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+      {
+        code: 'const x = ()=>{}; (ext ? x : ext)()',
+        errors: [{
+          message: 'Could not determine side-effects of global function',
+          type: 'Identifier'
+        }]
+      },
+    ]
+  }))
+})
 
 describe('ContinueStatement', testRule({
   valid: [
@@ -707,6 +776,8 @@ describe('Identifier', () => {
 describe('IfStatement', testRule({
   valid: [
     'let y;if (ext > 0) {y = 1} else {y = 2}',
+    'if (false) {ext()}',
+    'if (true) {} else {ext()}',
   ],
   invalid: [
     {
@@ -761,7 +832,79 @@ describe('LabeledStatement', testRule({
 describe('Literal', testRule({
   valid: [
     '3',
-    'const x = 3; x.y = 1',
+    'if (false) ext()',
+  ],
+  invalid: [
+    {
+      code: 'if (true) ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
+describe('LogicalExpression', testRule({
+  valid: [
+    '3 || 4',
+    'true || ext()',
+    'false && ext()',
+    'if (false && false) ext()',
+    'if (true && false) ext()',
+    'if (false && true) ext()',
+    'if (false || false) ext()',
+  ],
+  invalid: [
+    {
+      code: 'ext() && true',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'true && ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'false || ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'if (true && true) ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'if (false || true) ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'if (true || false) ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'if (true || true) ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
   ]
 }))
 
@@ -929,6 +1072,43 @@ describe('ReturnStatement', testRule({
   ]
 }))
 
+describe('SequenceExpression', testRule({
+  valid: [
+    '1, 2',
+    'if (ext, false) ext()'
+  ],
+  invalid: [
+    {
+      code: 'ext(), 1',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: '1, ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'if (1, true) ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'if (1, ext) ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
 describe('SwitchCase', testRule({
   valid: [
     'switch(ext){case ext:const x = 1;break;default:}',
@@ -1065,11 +1245,11 @@ describe('TryStatement', testRule({
   ]
 }))
 
-describe('UnaryExpression', () => testRule({
+describe('UnaryExpression', testRule({
   valid: [
     '!ext',
     'const x = {};delete x.y',
-    'const x = {};delete x["y"]',
+    'const x = {};delete x["y"]'
   ],
   invalid: [
     {
@@ -1091,6 +1271,13 @@ describe('UnaryExpression', () => testRule({
       errors: [{
         message: 'Mutating a global variable is a side-effect',
         type: 'Identifier'
+      }]
+    },
+    {
+      code: 'const x = ()=>{};delete x()',
+      errors: [{
+        message: 'Using delete on anything but a MemberExpression is a side-effect',
+        type: 'CallExpression'
       }]
     },
   ]
