@@ -20,6 +20,8 @@ RuleTester.setDefaultConfig({
  * * If a global object or parameter is assigned as a member to an object, it can be freely
  *   mutated (also wrong here); to fix this, we could store a data structure for each variable
  *   noting "do-not-mutate" and "do-not-mutate-any-members" nodes
+ * * Manually constructing an iterable will not trigger side-effects in the iterator function
+ *   (no solution yet)
  */
 
 /* Before release:
@@ -479,6 +481,43 @@ describe('ForInStatement', testRule({
     },
     {
       code: 'for(const x in {a: 1}) ext()',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+  ]
+}))
+
+describe('ForOfStatement', testRule({
+  valid: [
+    'for(const x of ext){x = 1}',
+    'let x; for(x of ext){}',
+  ],
+  invalid: [
+    {
+      code: 'for(ext of {a: 1}){}',
+      errors: [{
+        message: 'Assignment to a global variable is a side-effect',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'for(const x of ext()){}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'for(const x of {a: 1}){ext()}',
+      errors: [{
+        message: 'Could not determine side-effects of global function',
+        type: 'Identifier'
+      }]
+    },
+    {
+      code: 'for(const x of {a: 1}) ext()',
       errors: [{
         message: 'Could not determine side-effects of global function',
         type: 'Identifier'
