@@ -945,6 +945,13 @@ describe('MemberExpression', () => {
         }]
       },
       {
+        code: 'const x = ()=>{}; x().y()',
+        errors: [{
+          message: 'Could not determine side-effects of member function',
+          type: 'Identifier'
+        }]
+      },
+      {
         code: 'const Object = {}; const x = Object.keys({})',
         errors: [{
           message: 'Could not determine side-effects of member function',
