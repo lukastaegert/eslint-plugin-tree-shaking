@@ -66,6 +66,33 @@ describe(
   })
 )
 
+describe(
+  'ArrayPattern',
+  testRule({
+    valid: ['const [x] = []', 'const [,x,] = []'],
+    invalid: [
+      {
+        code: 'const [x = ext()] = []',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'const [,x = ext(),] = []',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
 describe('ArrowFunctionExpression', () => {
   testRule({
     valid: ['a=>{a(); ext()}']
@@ -74,7 +101,7 @@ describe('ArrowFunctionExpression', () => {
   describe(
     'when called',
     testRule({
-      valid: ['(()=>{})()'],
+      valid: ['(()=>{})()', '(a=>{})()', '((...a)=>{})()', '(({a})=>{})()'],
       invalid: [
         {
           code: '(()=>{ext()})()',
@@ -95,7 +122,34 @@ describe('ArrowFunctionExpression', () => {
           ]
         },
         {
+          code: '(({a = ext()})=>{})()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
           code: '(a=>{a()})(ext)',
+          errors: [
+            {
+              message: 'Calling a function parameter is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: '((...a)=>{a()})(ext)',
+          errors: [
+            {
+              message: 'Calling a function parameter is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: '(({a})=>{a()})(ext)',
           errors: [
             {
               message: 'Calling a function parameter is a side-effect',
@@ -114,6 +168,24 @@ describe('ArrowFunctionExpression', () => {
         },
         {
           code: '(a=>{const b = a;b.x = 1})(ext)',
+          errors: [
+            {
+              message: 'Mutating a function parameter is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: '((...a)=>{a.x = 1})(ext)',
+          errors: [
+            {
+              message: 'Mutating a function parameter is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: '(({a})=>{a.x = 1})(ext)',
           errors: [
             {
               message: 'Mutating a function parameter is a side-effect',
@@ -195,6 +267,38 @@ describe(
 )
 
 describe(
+  'AssignmentPattern',
+  testRule({
+    valid: [
+      'const {x = ext} = {}',
+      'const {x: y = ext} = {}',
+      'const {[ext]: x = ext} = {}',
+      'const x = ()=>{}, {y = x()} = {}'
+    ],
+    invalid: [
+      {
+        code: 'const {x = ext()} = {}',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'const {y: {x = ext()} = {}} = {}',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
   'BinaryExpression',
   testRule({
     valid: ['1 + 2', 'if (1-1) ext()'],
@@ -268,8 +372,7 @@ describe(
   })
 )
 
-describe(
-  'CallExpression',
+describe('CallExpression', () => {
   testRule({
     valid: [
       '(a=>{const y = a})(ext, ext)',
@@ -305,8 +408,43 @@ describe(
         ]
       }
     ]
-  })
-)
+  })()
+
+  describe(
+    'when called',
+    testRule({
+      invalid: [
+        {
+          code: 'const x = ()=>ext; const y = x(); y()',
+          errors: [
+            {
+              message: 'Calling the result of a function call is a side-effect',
+              type: 'CallExpression'
+            }
+          ]
+        }
+      ]
+    })
+  )
+
+  describe(
+    'when mutated',
+    testRule({
+      invalid: [
+        {
+          code: 'const x = ()=>ext; const y = x(); y.z = 1',
+          errors: [
+            {
+              message:
+                'Mutating the result of a function call is a side-effect',
+              type: 'CallExpression'
+            }
+          ]
+        }
+      ]
+    })
+  )
+})
 
 describe(
   'CatchClause',
@@ -724,7 +862,12 @@ describe('FunctionDeclaration', () => {
   describe(
     'when called',
     testRule({
-      valid: ['function x(){}; x()'],
+      valid: [
+        'function x(){}; x()',
+        'function x(a){}; x()',
+        'function x(...a){}; x()',
+        'function x({a}){}; x()'
+      ],
       invalid: [
         {
           code: 'function x(){ext()}; x()',
@@ -745,7 +888,34 @@ describe('FunctionDeclaration', () => {
           ]
         },
         {
+          code: 'function x(a = ext()){}; x()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
           code: 'function x(a){a()}; x(ext)',
+          errors: [
+            {
+              message: 'Calling a function parameter is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'function x(...a){a()}; x(ext)',
+          errors: [
+            {
+              message: 'Calling a function parameter is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'function x({a}){a()}; x(ext)',
           errors: [
             {
               message: 'Calling a function parameter is a side-effect',
@@ -764,6 +934,24 @@ describe('FunctionDeclaration', () => {
         },
         {
           code: 'function x(a){a.y = 1}; x(ext)',
+          errors: [
+            {
+              message: 'Mutating a function parameter is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'function x(...a){a.y = 1}; x(ext)',
+          errors: [
+            {
+              message: 'Mutating a function parameter is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'function x({a}){a.y = 1}; x(ext)',
           errors: [
             {
               message: 'Mutating a function parameter is a side-effect',
@@ -818,7 +1006,12 @@ describe('FunctionExpression', () => {
   describe(
     'when called',
     testRule({
-      valid: ['(function (){}())'],
+      valid: [
+        '(function (){}())',
+        '(function (a){}())',
+        '(function (...a){}())',
+        '(function ({a}){}())'
+      ],
       invalid: [
         {
           code: '(function (){ext()}())',
@@ -839,7 +1032,34 @@ describe('FunctionExpression', () => {
           ]
         },
         {
+          code: '(function ({a = ext()}){}())',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
           code: '(function (a){a()}(ext))',
+          errors: [
+            {
+              message: 'Calling a function parameter is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: '(function (...a){a()}(ext))',
+          errors: [
+            {
+              message: 'Calling a function parameter is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: '(function ({a}){a()}(ext))',
           errors: [
             {
               message: 'Calling a function parameter is a side-effect',
@@ -858,6 +1078,24 @@ describe('FunctionExpression', () => {
         },
         {
           code: '(function (a){const b = a;b.x = 1}(ext))',
+          errors: [
+            {
+              message: 'Mutating a function parameter is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: '(function (...a){a.x = 1}(ext))',
+          errors: [
+            {
+              message: 'Mutating a function parameter is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: '(function ({a}){a.x = 1}(ext))',
           errors: [
             {
               message: 'Mutating a function parameter is a side-effect',
@@ -958,6 +1196,26 @@ describe('Identifier', () => {
               type: 'Identifier'
             }
           ]
+        },
+        {
+          code: 'const x = ()=>{}; const {y} = x(); y()',
+          errors: [
+            {
+              message:
+                'Could not determine side-effects of calling result of destructuring assignment',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'const x = ()=>{}; const [y] = x(); y()',
+          errors: [
+            {
+              message:
+                'Could not determine side-effects of calling result of destructuring assignment',
+              type: 'Identifier'
+            }
+          ]
         }
       ]
     })
@@ -1000,6 +1258,16 @@ describe('Identifier', () => {
           errors: [
             {
               message: 'Mutating a global variable is a side-effect',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'const x = {y:ext}; const {y} = x; y.z = 1',
+          errors: [
+            {
+              message:
+                'Mutating the result of a destructuring assignment is a side-effect',
               type: 'Identifier'
             }
           ]
@@ -1456,6 +1724,31 @@ describe(
 )
 
 describe(
+  'ObjectPattern',
+  testRule({
+    valid: ['const {x} = {}', 'const {[ext]: x} = {}'],
+    invalid: [
+      {
+        code: 'const {[ext()]: x} = {}',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
+  'RestElement',
+  testRule({
+    valid: ['const [...x] = []']
+  })
+)
+
+describe(
   'ReturnStatement',
   testRule({
     valid: ['(()=>{return})()', '(()=>{return 1})()'],
@@ -1787,7 +2080,8 @@ describe(
       'var x, y',
       'var x = 1, y = 2',
       'const x = 1, y = 2',
-      'let x = 1, y = 2'
+      'let x = 1, y = 2',
+      'const {x} = {}'
     ],
     invalid: [
       {
@@ -1823,6 +2117,15 @@ describe(
             message: 'Could not determine side-effects of global function',
             type: 'Identifier'
           },
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'const {x = ext()} = {}',
+        errors: [
           {
             message: 'Could not determine side-effects of global function',
             type: 'Identifier'
