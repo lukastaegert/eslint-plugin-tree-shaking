@@ -98,8 +98,7 @@ describe('ArrowFunctionExpression', () => {
           code: '(a=>{a()})(ext)',
           errors: [
             {
-              message:
-                'Calling a function parameter is considered a side-effect',
+              message: 'Calling a function parameter is a side-effect',
               type: 'Identifier'
             }
           ]
@@ -501,9 +500,21 @@ describe(
 )
 
 describe(
+  'ExportAllDeclaration',
+  testRule({
+    valid: ['export * from "x"']
+  })
+)
+
+describe(
   'ExportDefaultDeclaration',
   testRule({
-    valid: ['export default 42'],
+    valid: [
+      'export default 2',
+      'const x = 2; export default x',
+      'export default function(){}',
+      'export default (function(){})'
+    ],
     invalid: [
       {
         code: 'export default ext()',
@@ -521,7 +532,14 @@ describe(
 describe(
   'ExportNamedDeclaration',
   testRule({
-    valid: ['export const x = {}'],
+    valid: [
+      'export const x = 2',
+      'export function x(){}',
+      'const x = 2; export {x}',
+      'export {x} from "y"',
+      'export {x as y} from "z"',
+      'export {x as default} from "z"'
+    ],
     invalid: [
       {
         code: 'export const x=ext()',
@@ -730,8 +748,7 @@ describe('FunctionDeclaration', () => {
           code: 'function x(a){a()}; x(ext)',
           errors: [
             {
-              message:
-                'Calling a function parameter is considered a side-effect',
+              message: 'Calling a function parameter is a side-effect',
               type: 'Identifier'
             }
           ]
@@ -740,8 +757,7 @@ describe('FunctionDeclaration', () => {
           code: 'function x(a){a(); a(); a()}; x(ext)',
           errors: [
             {
-              message:
-                'Calling a function parameter is considered a side-effect',
+              message: 'Calling a function parameter is a side-effect',
               type: 'Identifier'
             }
           ]
@@ -826,8 +842,7 @@ describe('FunctionExpression', () => {
           code: '(function (a){a()}(ext))',
           errors: [
             {
-              message:
-                'Calling a function parameter is considered a side-effect',
+              message: 'Calling a function parameter is a side-effect',
               type: 'Identifier'
             }
           ]
@@ -1039,6 +1054,93 @@ describe(
           },
           {
             message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
+  'ImportDeclaration',
+  testRule({
+    valid: [
+      'import "x"',
+      'import x from "y"',
+      'import {x} from "y"',
+      'import {x as y} from "z"',
+      'import * as x from "y"'
+    ],
+    invalid: [
+      {
+        code: 'import x from "y"; x()',
+        errors: [
+          {
+            message: 'Calling an import is a side-effect',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'import x from "y"; x.z = 1',
+        errors: [
+          {
+            message: 'Mutating an import is a side-effect',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'import {x} from "y"; x()',
+        errors: [
+          {
+            message: 'Calling an import is a side-effect',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'import {x} from "y"; x.z = 1',
+        errors: [
+          {
+            message: 'Mutating an import is a side-effect',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'import {x as y} from "z"; y()',
+        errors: [
+          {
+            message: 'Calling an import is a side-effect',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'import {x as y} from "z"; y.a = 1',
+        errors: [
+          {
+            message: 'Mutating an import is a side-effect',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'import * as x from "y"; x.z()',
+        errors: [
+          {
+            message: 'Could not determine side-effects of member function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'import * as x from "y"; x.z = 1',
+        errors: [
+          {
+            message: 'Mutating an import is a side-effect',
             type: 'Identifier'
           }
         ]
