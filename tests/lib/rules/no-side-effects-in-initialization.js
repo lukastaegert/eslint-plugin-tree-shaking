@@ -27,8 +27,6 @@ RuleTester.setDefaultConfig({
  */
 
 /* Before release:
- * * destructuring assignment
- * * call to class declaration
  * * shorthand object notation
  * * run tests again by using rollup and checking if tree-shaking occurs
  */
@@ -476,6 +474,180 @@ describe(
     ]
   })
 )
+
+describe('ClassBody', () => {
+  testRule({
+    valid: ['class x {a(){ext()}}'],
+    invalid: [
+      {
+        code: 'class x {[ext()](){}}',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })()
+
+  describe(
+    'when called',
+    testRule({
+      valid: [
+        'class x {a(){ext()}}; new x()',
+        'class x {constructor(){}}; new x()',
+        'class y{}; class x extends y{}; new x()',
+        'class y{}; class x extends y{constructor(){super()}}; new x()'
+      ],
+      invalid: [
+        {
+          code: 'class x {constructor(){ext()}}; new x()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'class x extends ext {}; new x()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'class y {constructor(){ext()}}; class x extends y {}; new x()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code:
+            'class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; new x()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        }
+      ]
+    })
+  )
+})
+
+describe('ClassDeclaration', () => {
+  testRule({
+    valid: ['class x extends ext {}'],
+    invalid: [
+      {
+        code: 'class x extends ext() {}',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'class x {[ext()](){}}',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })()
+
+  describe(
+    'when called',
+    testRule({
+      valid: ['class x {}; new x()'],
+      invalid: [
+        {
+          code: 'class x {constructor(){ext()}}; new x()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'class x extends ext {}; new x()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        }
+      ]
+    })
+  )
+})
+
+describe('ClassExpression', () => {
+  testRule({
+    valid: ['(class extends ext {})'],
+    invalid: [
+      {
+        code: '(class extends ext() {})',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: '(class {[ext()](){}})',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })()
+
+  describe(
+    'when called',
+    testRule({
+      valid: ['new (class {})()'],
+      invalid: [
+        {
+          code: 'new (class {constructor(){ext()}})()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'new (class extends ext {})()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        }
+      ]
+    })
+  )
+})
 
 describe('ConditionalExpression', () => {
   testRule({
@@ -1645,6 +1817,24 @@ describe('MemberExpression', () => {
 })
 
 describe(
+  'MethodDefinition',
+  testRule({
+    valid: ['class x {a(){}}', 'class x {static a(){}}'],
+    invalid: [
+      {
+        code: 'class x {static [ext()](){}}',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
   'NewExpression',
   testRule({
     valid: [
@@ -1810,6 +2000,47 @@ describe(
     ]
   })
 )
+
+describe('Super', () => {
+  describe(
+    'when called',
+    testRule({
+      valid: ['class y{}; class x extends y{constructor(){super()}}; new x()'],
+      invalid: [
+        {
+          code:
+            'class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; new x()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'class x {constructor(){super()}}; new x()',
+          errors: [
+            {
+              message:
+                'Could not determine side effects of super class constructor',
+              type: 'Super'
+            }
+          ]
+        },
+        {
+          code:
+            'class y{}; class x extends y{constructor(){super(); super.test()}}; new x()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of member function',
+              type: 'Identifier'
+            }
+          ]
+        }
+      ]
+    })
+  )
+})
 
 describe(
   'SwitchCase',
