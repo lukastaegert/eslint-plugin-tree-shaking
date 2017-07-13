@@ -27,7 +27,6 @@ RuleTester.setDefaultConfig({
  */
 
 /* Before release:
- * * shorthand object notation
  * * run tests again by using rollup and checking if tree-shaking occurs
  */
 
@@ -381,8 +380,7 @@ describe('CallExpression', () => {
         code: '3()',
         errors: [
           {
-            message:
-              'Expression with unknown side-effects might be called as a function',
+            message: 'Could not determine side-effects of calling Literal',
             type: 'Literal'
           }
         ]
@@ -1817,6 +1815,13 @@ describe('MemberExpression', () => {
 })
 
 describe(
+  'MetaProperty',
+  testRule({
+    valid: ['function x(){const y = new.target}; x()']
+  })
+)
+
+describe(
   'MethodDefinition',
   testRule({
     valid: ['class x {a(){}}', 'class x {static a(){}}'],
@@ -2089,6 +2094,60 @@ describe(
       },
       {
         code: 'var x=()=>{}; switch(ext){case 1:var x=ext}; x()',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
+  'TaggedTemplateExpression',
+  testRule({
+    valid: ['const x = ()=>{}; x``'],
+    invalid: [
+      {
+        code: 'ext``',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        // eslint-disable-next-line no-template-curly-in-string
+        code: 'const x = ()=>{}; x`${ext()}`',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
+  'TemplateLiteral',
+  testRule({
+    valid: [
+      '``',
+      '`Literal`',
+      // eslint-disable-next-line no-template-curly-in-string
+      '`Literal ${ext}`',
+      // eslint-disable-next-line no-template-curly-in-string
+      'const x = ()=>"a"; `Literal ${x()}`'
+    ],
+    invalid: [
+      {
+        // eslint-disable-next-line no-template-curly-in-string
+        code: '`Literal ${ext()}`',
         errors: [
           {
             message: 'Could not determine side-effects of global function',
@@ -2406,3 +2465,41 @@ describe(
     ]
   })
 )
+
+describe('YieldExpression', () => {
+  testRule({
+    valid: [
+      'function* x(){const a = yield}; x()',
+      'function* x(){yield ext}; x()'
+    ],
+    invalid: [
+      {
+        code: 'function* x(){yield ext()}; x()',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })()
+
+  describe(
+    'when called',
+    testRule({
+      valid: [],
+      invalid: [
+        {
+          code: 'function* x(){yield ext()}; x()',
+          errors: [
+            {
+              message: 'Could not determine side-effects of global function',
+              type: 'Identifier'
+            }
+          ]
+        }
+      ]
+    })
+  )
+})
