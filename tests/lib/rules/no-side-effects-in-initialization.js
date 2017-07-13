@@ -5,7 +5,7 @@ const RuleTester = require('eslint').RuleTester
 
 RuleTester.setDefaultConfig({
   parserOptions: {
-    ecmaVersion: 6,
+    ecmaVersion: 2017,
     sourceType: 'module'
   }
 })
@@ -284,6 +284,26 @@ describe(
       },
       {
         code: 'const {y: {x = ext()} = {}} = {}',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
+  'AwaitExpression',
+  testRule({
+    valid: [
+      'const x = () => Promise.resolve(); const y = async ()=>{await x()}; y()'
+    ],
+    invalid: [
+      {
+        code: 'const x = async ()=>{await ext()}; x()',
         errors: [
           {
             message: 'Could not determine side-effects of global function',
