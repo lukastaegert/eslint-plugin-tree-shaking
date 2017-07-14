@@ -1,39 +1,106 @@
 /* eslint-env mocha */
 
+/* Bugs in rollup:
+ * * Reassigning or mutating a variable that has at some point a non-trivial value will be an effect
+ *   even if it is never used
+ * * Reassigning var with var is handled differently from reassigning without var
+ * * Side-effects in function call arguments are ignored
+ * * Side-effects in default parameter values are ignored
+ * * Side-effects in destructuring default values are ignored
+ * * Side-effects in computed properties in assignments and class bodies are ignored
+ * * Assigning to a global variable by a ForInStatement/ForOfStatement is ignored
+ * * Assigning values to members of MemberExpressions is ignored even though this could mutate a
+ *   global variable
+ * * Variable shadowing does not work properly in SwitchScopes
+ * * Side-effects in TaggedTemplateLiterals are ignored
+ * * Manually constructing an iterable will not trigger side-effects in the iterator function
+ */
+
+/* Possible improvements for rollup:
+ * * Consider impure functions as unknown assignments to their arguments
+ * * Properly handle valid this values
+ * * If a LogicalExpression does not need both arguments to determine its value, do not consider
+ *   side-effects in the other argument
+ * * SequenceExpressions return their last value
+ * * "delete" is not necessarily a side-effect
+ * * Properly clean up top-level BlockStatements
+ * * Instantiating ES6 classes does not need to be a side-effect
+ * * LabeledStatements do not necessarily have side-effects
+ */
+
 const rule = require('../../../lib/rules/no-side-effects-in-initialization')
-const RuleTester = require('eslint').RuleTester
+const { Linter, RuleTester } = require('eslint')
+const fs = require('fs')
+const path = require('path')
+const rollup = require('rollup')
+
+const BUNDLER_TEST_PATH = path.join(__dirname, '../../../test-resources')
+const BUNDLER_TEST_FILE = path.join(BUNDLER_TEST_PATH, 'test.js')
+const BUNDLER_IMPORT_FILE = path.join(BUNDLER_TEST_PATH, 'main.js')
+const RULE_NAME = 'no-side-effects-in-initialization'
+
+const PARSER_OPTIONS = {
+  ecmaVersion: 2017,
+  sourceType: 'module'
+}
 
 RuleTester.setDefaultConfig({
-  parserOptions: {
-    ecmaVersion: 2017,
-    sourceType: 'module'
-  }
+  parserOptions: PARSER_OPTIONS
 })
-
-/* Bugs in rollup:
- * * Reassigning a variable that is at some point a function will be an effect; instead, check
- *   all assignments
- * * This generally goes for reassignments where any assignment is non-trivial
- * * Reassigning var with var is handled differently from reassigning without var
- * * side-effects in function call arguments
- * * Consider impure functions as unknown assignments to their arguments
- * * Creating ES6 classes is always impure
- * * "this" expressions in constructors are only handled properly on the top level
- * * If a global object or parameter is assigned as a member to an object, it can be freely
- *   mutated (also wrong here); to fix this, we could store a data structure for each variable
- *   noting "do-not-mutate" and "do-not-mutate-any-members" nodes
- * * Manually constructing an iterable will not trigger side-effects in the iterator function
- *   (no solution yet)
- */
-
-/* Before release:
- * * run tests again by using rollup and checking if tree-shaking occurs
- */
-
 const ruleTester = new RuleTester()
 
+const linter = new Linter()
+linter.defineRule(RULE_NAME, rule)
+
+const createRollupOutput = code => {
+  fs.writeFileSync(BUNDLER_TEST_FILE, code)
+  return rollup
+    .rollup({ entry: BUNDLER_IMPORT_FILE })
+    .then(bundle => bundle.generate({ format: 'es' }))
+    .then(result => result.code.trim())
+}
+
+const getEsLintErrors = code =>
+  linter.verify(code, {
+    parserOptions: PARSER_OPTIONS,
+    rules: { [RULE_NAME]: [1, { compatibility: 'rollup' }] }
+  })
+
+const verifyCodeWithRollup = code => {
+  it(`reflects rollup's result for: ${code}`, () => {
+    const esLintErrors = getEsLintErrors(code)
+    return createRollupOutput(code)
+      .then(output => {
+        if (esLintErrors.length === 0 && output.length > 0) {
+          throw new Error(`${code} was not removed by rollup even though it contained no errors. Rollup output:
+${output}\n`)
+        } else if (esLintErrors.length > 0 && output.length === 0) {
+          console.warn(`${code} was removed by rollup even though it contained errors:
+${esLintErrors.map(error => `- ${error.message}`).join('\n')}\n`)
+        }
+      })
+      .catch(error => {
+        if (esLintErrors.length > 0) {
+          console.warn(error.message)
+        } else {
+          throw error
+        }
+      })
+  })
+}
+
+const verifyCodeSnippetsWithRollup = codeSnippets =>
+  codeSnippets.forEach(codeSnippet =>
+    verifyCodeWithRollup(codeSnippet.code || codeSnippet)
+  )
+
 const testRule = ({ valid = [], invalid = [] }) => () => {
-  ruleTester.run('no-side-effects-in-initialization', rule, { valid, invalid })
+  ruleTester.run(RULE_NAME, rule, {
+    valid,
+    invalid
+  })
+  verifyCodeSnippetsWithRollup(valid)
+  verifyCodeSnippetsWithRollup(invalid)
 }
 
 describe(
@@ -106,15 +173,6 @@ describe('ArrowFunctionExpression', () => {
             {
               message: 'Could not determine side-effects of global function',
               type: 'Identifier'
-            }
-          ]
-        },
-        {
-          code: 'new (()=>{})()',
-          errors: [
-            {
-              message: 'Calling an arrow function with "new" is a side-effect',
-              type: 'ArrowFunctionExpression'
             }
           ]
         },
@@ -206,12 +264,14 @@ describe(
   'AssignmentExpression',
   testRule({
     valid: [
-      'var x;x = 1',
+      'var x;x = {}',
       'var x;x += 1',
       'const x = {}; x.y = 1',
       'const x = {}; x["y"] = 1',
       'const x = {}, y = ()=>{}; x[y()] = 1',
-      'function x(){this.y = 1}; const z = new x()'
+      'function x(){this.y = 1}; const z = new x()',
+      'let x = 1; x = 2 + 3',
+      'let x; x = 2 + 3'
     ],
     invalid: [
       {
@@ -396,15 +456,6 @@ describe('CallExpression', () => {
       'const x = ()=>{}, y = ()=>{}; x(y())'
     ],
     invalid: [
-      {
-        code: '3()',
-        errors: [
-          {
-            message: 'Could not determine side-effects of calling Literal',
-            type: 'Literal'
-          }
-        ]
-      },
       {
         code: '(()=>{})(ext(), 1)',
         errors: [
@@ -864,9 +915,9 @@ describe(
       'export const x = 2',
       'export function x(){}',
       'const x = 2; export {x}',
-      'export {x} from "y"',
-      'export {x as y} from "z"',
-      'export {x as default} from "z"'
+      'export {x} from "./import"',
+      'export {x as y} from "./import"',
+      'export {x as default} from "./import"'
     ],
     invalid: [
       {
@@ -948,7 +999,7 @@ describe(
 describe(
   'ForOfStatement',
   testRule({
-    valid: ['for(const x of ext){x = 1}', 'let x; for(x of ext){}'],
+    valid: ['for(const x of ext){}', 'let x; for(x of ext){}'],
     invalid: [
       {
         code: 'for(ext of {a: 1}){}',
@@ -1524,15 +1575,15 @@ describe(
   'ImportDeclaration',
   testRule({
     valid: [
-      'import "x"',
-      'import x from "y"',
-      'import {x} from "y"',
-      'import {x as y} from "z"',
-      'import * as x from "y"'
+      'import "./import"',
+      'import x from "./import-default"',
+      'import {x} from "./import"',
+      'import {x as y} from "./import"',
+      'import * as x from "./import"'
     ],
     invalid: [
       {
-        code: 'import x from "y"; x()',
+        code: 'import x from "./import-default"; x()',
         errors: [
           {
             message: 'Calling an import is a side-effect',
@@ -1541,7 +1592,7 @@ describe(
         ]
       },
       {
-        code: 'import x from "y"; x.z = 1',
+        code: 'import x from "./import-default"; x.z = 1',
         errors: [
           {
             message: 'Mutating an import is a side-effect',
@@ -1550,7 +1601,7 @@ describe(
         ]
       },
       {
-        code: 'import {x} from "y"; x()',
+        code: 'import {x} from "./import"; x()',
         errors: [
           {
             message: 'Calling an import is a side-effect',
@@ -1559,7 +1610,7 @@ describe(
         ]
       },
       {
-        code: 'import {x} from "y"; x.z = 1',
+        code: 'import {x} from "./import"; x.z = 1',
         errors: [
           {
             message: 'Mutating an import is a side-effect',
@@ -1568,7 +1619,7 @@ describe(
         ]
       },
       {
-        code: 'import {x as y} from "z"; y()',
+        code: 'import {x as y} from "./import"; y()',
         errors: [
           {
             message: 'Calling an import is a side-effect',
@@ -1577,7 +1628,7 @@ describe(
         ]
       },
       {
-        code: 'import {x as y} from "z"; y.a = 1',
+        code: 'import {x as y} from "./import"; y.a = 1',
         errors: [
           {
             message: 'Mutating an import is a side-effect',
@@ -1586,7 +1637,7 @@ describe(
         ]
       },
       {
-        code: 'import * as x from "y"; x.z()',
+        code: 'import * as y from "./import"; y.x()',
         errors: [
           {
             message: 'Could not determine side-effects of member function',
@@ -1595,7 +1646,7 @@ describe(
         ]
       },
       {
-        code: 'import * as x from "y"; x.z = 1',
+        code: 'import * as y from "./import"; y.x = 1',
         errors: [
           {
             message: 'Mutating an import is a side-effect',
@@ -1725,7 +1776,7 @@ describe(
 
 describe('MemberExpression', () => {
   testRule({
-    valid: ['const x = ext.y', 'const x = ext["y"]'],
+    valid: ['const x = ext.y', 'const x = ext["y"]', 'let x = ()=>{}; x.y = 1'],
     invalid: [
       {
         code: 'const x = {};const y = x[ext()]',
@@ -1803,7 +1854,7 @@ describe('MemberExpression', () => {
       valid: ['const x = {};x.y = ext', 'const x = {y: ext};delete x.y'],
       invalid: [
         {
-          code: 'const x = {y:{}};x.y.z = ext',
+          code: 'const x = {y: ext};x.y.z = 1',
           errors: [
             {
               message: 'Mutating members of an object is a side-effect',
@@ -1873,24 +1924,6 @@ describe(
           {
             message: 'Could not determine side-effects of global function',
             type: 'Identifier'
-          }
-        ]
-      },
-      {
-        code: 'new (()=>{})()',
-        errors: [
-          {
-            message: 'Calling an arrow function with "new" is a side-effect',
-            type: 'ArrowFunctionExpression'
-          }
-        ]
-      },
-      {
-        code: 'const x=()=>{}; new x()',
-        errors: [
-          {
-            message: 'Calling an arrow function with "new" is a side-effect',
-            type: 'ArrowFunctionExpression'
           }
         ]
       }

@@ -11,3 +11,4 @@ yarn-error.log*
 .eslintcache
 .yarn-integrity
 
+test-resources/test.js

@@ -10,7 +10,7 @@
   "author": "Lukas Taegert",
   "main": "lib/index.js",
   "scripts": {
-    "test": "mocha tests --recursive",
+    "test": "mocha tests/lib/rules/no-side-effects-in-initialization.js",
     "lint": "prettier-standard *.js lib/**/*.js tests/**/*.js",
     "precommit": "lint-staged",
     "commitmsg": "validate-commit-msg",
@@ -26,10 +26,12 @@
     ]
   },
   "devDependencies": {
+    "eslint": "^4.2.0",
     "husky": "^0.14.3",
     "lint-staged": "^4.0.1",
     "mocha": "^3.1.2",
     "prettier-standard": "^6.0.0",
+    "rollup": "^0.45.2",
     "standard": "^10.0.2",
     "validate-commit-msg": "^2.12.2"
   },
