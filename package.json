@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-tree-shaking",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Marks side-effects in module initialization that would interfere with tree-shaking",
   "keywords": [
     "eslint",
