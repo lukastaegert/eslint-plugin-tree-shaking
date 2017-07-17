@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-tree-shaking",
-  "version": "1.0.0",
+  "version": "0.0.0-development",
   "description": "Marks side-effects in module initialization that would interfere with tree-shaking",
   "keywords": [
     "eslint",
@@ -20,7 +20,8 @@
     "commitmsg": "validate-commit-msg",
     "prepush": "npm test",
     "postmerge": "npm install && npm prune",
-    "postrewrite": "npm install && npm prune"
+    "postrewrite": "npm install && npm prune",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "lint-staged": {
     "*.js": [
@@ -37,10 +38,15 @@
     "prettier-standard": "^6.0.0",
     "rollup": "^0.45.2",
     "standard": "^10.0.2",
-    "validate-commit-msg": "^2.12.2"
+    "validate-commit-msg": "^2.12.2",
+    "semantic-release": "^6.3.6"
   },
   "engines": {
     "node": ">=6.0.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lukastaegert/eslint-plugin-tree-shaking.git"
+  }
 }
