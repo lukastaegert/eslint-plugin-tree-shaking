@@ -1,11 +1,15 @@
 {
   "name": "eslint-plugin-tree-shaking",
   "version": "0.0.0",
-  "description": "Spots side-effects in module initialization that would interfere with tree-shaking",
+  "description": "Marks side-effects in module initialization that would interfere with tree-shaking",
   "keywords": [
     "eslint",
     "eslintplugin",
-    "eslint-plugin"
+    "eslint-plugin",
+    "tree-shaking",
+    "side-effects",
+    "rollup",
+    "webpack"
   ],
   "author": "Lukas Taegert",
   "main": "lib/index.js",
