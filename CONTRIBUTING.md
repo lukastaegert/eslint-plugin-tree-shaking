@@ -1,16 +1,7 @@
 # How to contribute
 
 ### You have code that is not tree-shaken by rollup even though there are no ESLint issues
-* Make sure you are using rollup-compatibility mode, i.e. in `eslint.rc`:
-  ```json
-  {
-      "rules": {
-          "tree-shaking/no-side-effects-in-initialization": [
-              2, {"compatibility": "rollup"}
-          ]
-      }
-  }
-  ```
+* Make sure you are using [rollup-compatibility mode](./README.md#rollup-compatibility-mode)
 * Make sure you are using the latest versions of both rollup and this plugin
 * Check if there is already an issue about this
 * If not, **file an issue!** The title should be prefixed with "\[rollup\] …" to make it easier to

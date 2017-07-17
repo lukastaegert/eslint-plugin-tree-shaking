@@ -69,6 +69,8 @@ Then add the rule `no-side-effects-in-initialization` to the rules section:
 }
 ```
 
+### Rollup compatibility mode
+
 If you are using [rollup.js](https://rollupjs.org/), you should activate the rollup compatibility
 mode that will flag additional issues that prevent tree-shaking in rollup:
 ```json
