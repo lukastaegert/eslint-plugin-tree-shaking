@@ -114,5 +114,5 @@ Planned improvements:
 * ESLint only ever analyzes the current file. Therefore, this plugin assumes that all imported
   functions have side-effects. The current plan is to solved this at some point via special
   comments.
-* There is no webpack compatibility mode yet. The plan is to add this eventually, but if you want
+* There is no webpack compatibility mode yet. The plan is to add this eventually but if you want
   to speed things up, please contribute.
