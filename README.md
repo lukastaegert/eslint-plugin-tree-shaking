@@ -1,5 +1,7 @@
 # eslint-plugin-tree-shaking
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/lukastaegert/eslint-plugin-tree-shaking.svg)](https://greenkeeper.io/)
+
 Marks all side-effects in module initialization that will interfere with tree-shaking
 
 ## Usage
