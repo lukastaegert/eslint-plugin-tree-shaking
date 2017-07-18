@@ -14,6 +14,7 @@
  * * Variable shadowing does not work properly in SwitchScopes
  * * Side-effects in TaggedTemplateLiterals are ignored
  * * Manually constructing an iterable will not trigger side-effects in the iterator function
+ * * Calling an imported arrow function always seems to have side-effects
  */
 
 /* Possible improvements for rollup:
@@ -889,14 +890,36 @@ describe(
   'ExportDefaultDeclaration',
   testRule({
     valid: [
-      'export default 2',
-      'const x = 2; export default x',
+      'export default ext',
+      'const x = ext; export default x',
       'export default function(){}',
-      'export default (function(){})'
+      'export default (function(){})',
+      'const x = function(){}; export default /* tree-shaking no-side-effects-when-called */ x',
+      'export default /* tree-shaking no-side-effects-when-called */ function(){}'
     ],
     invalid: [
       {
         code: 'export default ext()',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code:
+          'export default /* tree-shaking no-side-effects-when-called */ ext',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code:
+          'const x = ext; export default /* tree-shaking no-side-effects-when-called */ x',
         errors: [
           {
             message: 'Could not determine side-effects of global function',
@@ -912,16 +935,49 @@ describe(
   'ExportNamedDeclaration',
   testRule({
     valid: [
-      'export const x = 2',
-      'export function x(){}',
-      'const x = 2; export {x}',
+      'export const x = ext',
+      'export function x(){ext()}',
+      'const x = ext; export {x}',
       'export {x} from "./import"',
       'export {x as y} from "./import"',
-      'export {x as default} from "./import"'
+      'export {x as default} from "./import"',
+      'export const /* tree-shaking no-side-effects-when-called */ x = function(){}',
+      'export function /* tree-shaking no-side-effects-when-called */ x(){}',
+      'const x = function(){}; export {/* tree-shaking no-side-effects-when-called */ x}'
     ],
     invalid: [
       {
-        code: 'export const x=ext()',
+        code: 'export const x = ext()',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code:
+          'export const /* tree-shaking no-side-effects-when-called */ x = ext',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code:
+          'export function /* tree-shaking no-side-effects-when-called */ x(){ext()}',
+        errors: [
+          {
+            message: 'Could not determine side-effects of global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code:
+          'const x = ext; export {/* tree-shaking no-side-effects-when-called */ x}',
         errors: [
           {
             message: 'Could not determine side-effects of global function',
@@ -1579,7 +1635,12 @@ describe(
       'import x from "./import-default"',
       'import {x} from "./import"',
       'import {x as y} from "./import"',
-      'import * as x from "./import"'
+      'import * as x from "./import"',
+      'import /* tree-shaking no-side-effects-when-called */ x from "./import-default-no-effects"; x()',
+      'import /* test */ /*tree-shaking  no-side-effects-when-called */ x from "./import-default-no-effects"; x()',
+      'import /* tree-shaking  no-side-effects-when-called*/ /* test */ x from "./import-default-no-effects"; x()',
+      'import {/* tree-shaking  no-side-effects-when-called */ x} from "./import-no-effects"; x()',
+      'import {x as /* tree-shaking  no-side-effects-when-called */ y} from "./import-no-effects"; y()'
     ],
     invalid: [
       {
