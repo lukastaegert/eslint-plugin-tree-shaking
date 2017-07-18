@@ -1,6 +1,6 @@
 # eslint-plugin-tree-shaking
 
-Marks side-effects in module initialization that would interfere with tree-shaking
+Marks all side-effects in module initialization that will interfere with tree-shaking
 
 ## Usage
 
