@@ -11,7 +11,7 @@ interfere with the tree-shaking algorithm of their module bundler (i.e.
 **JavaScript:**
 ```javascript
 myGlobal = 17
-const x = {[globalFunction(1)]: 'myString'}
+const x = {[globalFunction()]: 'myString'}
 
 export default 42
 ```
@@ -19,7 +19,7 @@ export default 42
 **Rollup output:**
 ```javascript
 myGlobal = 17;
-const x = {[globalFunction(1)]: 'myString'};
+const x = {[globalFunction()]: 'myString'};
 
 var index = 42;
 
@@ -94,6 +94,57 @@ new x()
 1:1   error  [Rollup specific] Calling a ClassDeclaration is a side-effect
 ```
 
+## Magic Comments
+
+ESLint only ever analyzes one file at a time and by default, this plugin assumes that all imported
+functions have side-effects. If this is not the case, this plugin supports magic comments you can
+add before identifiers in imports and exports to specify that you assume an import or export to be a
+pure function. Examples:
+
+* By default, imported functions are assumed to have side-effects:
+
+  **JavaScript:**
+  ```javascript
+  import {x} from "./some-file";
+  x()
+  ```
+  
+  **ESLint output:**
+  ```
+  1:9  error  Calling an import is a side-effect
+  ```
+
+* You can mark a side-effect free import with a magic comment:
+ 
+  **JavaScript:**
+  ```javascript
+  import {/* tree-shaking no-side-effects-when-called */ x} from "./some-file";
+  x()
+  ```
+  
+  **No ESLint errors**
+
+* By default, exported functions are not checked for side-effects:
+ 
+  **JavaScript:**
+  ```javascript
+  export const x = globalFunction
+  ```
+  
+  **No ESLint errors**
+
+* You can check exports for side-effects with a magic comment:
+
+  **JavaScript:**
+  ```javascript
+  export const /* tree-shaking no-side-effects-when-called */ x = globalFunction
+  ```
+  
+  **ESLint output:**
+  ```
+  1:65  error  Could not determine side-effects of global function
+  ```
+
 ## Background and Planned Development
 
 This plugin is in early development. If you want to contribute, please read
@@ -113,8 +164,5 @@ compatibility mode. If you find that you have code that
 please--if no-one else has done so yet--[check the guidelines](./CONTRIBUTING.md) and **file an issue!**
 
 Planned improvements:
-* ESLint only ever analyzes the current file. Therefore, this plugin assumes that all imported
-  functions have side-effects. The current plan is to solved this at some point via special
-  comments.
 * There is no webpack compatibility mode yet. The plan is to add this eventually but if you want
   to speed things up, please contribute.
