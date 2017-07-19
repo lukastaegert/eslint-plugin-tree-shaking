@@ -33,8 +33,8 @@ export default index;
 
 **ESLint output:**
 ```
-1:1   error  Assignment to a global variable is a side-effect
-2:13  error  Could not determine side-effects of global function
+1:1   error  Cannot determine side-effects of assignment to global variable
+2:13  error  Cannot determine side-effects of calling global function
 ```
 
 This plugin is most useful when you
@@ -116,7 +116,7 @@ pure function. Examples:
   
   **ESLint output:**
   ```
-  1:9  error  Calling an import is a side-effect
+  1:9  error  Cannot determine side-effects of calling imported function
   ```
 
 * You can mark a side-effect free import with a magic comment:
@@ -147,7 +147,7 @@ pure function. Examples:
   
   **ESLint output:**
   ```
-  1:65  error  Could not determine side-effects of global function
+  1:65  error  Cannot determine side-effects of calling global function
   ```
 
 ## Background and Planned Development

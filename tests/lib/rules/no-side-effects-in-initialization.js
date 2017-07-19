@@ -113,7 +113,7 @@ describe(
         code: '[ext()]',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -122,7 +122,7 @@ describe(
         code: '[,,ext(),]',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -140,7 +140,7 @@ describe(
         code: 'const [x = ext()] = []',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -149,7 +149,7 @@ describe(
         code: 'const [,x = ext(),] = []',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -172,7 +172,8 @@ describe('ArrowFunctionExpression', () => {
           code: '(()=>{ext()})()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -181,7 +182,8 @@ describe('ArrowFunctionExpression', () => {
           code: '(({a = ext()})=>{})()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -190,7 +192,8 @@ describe('ArrowFunctionExpression', () => {
           code: '(a=>{a()})(ext)',
           errors: [
             {
-              message: 'Calling a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of calling function parameter',
               type: 'Identifier'
             }
           ]
@@ -199,7 +202,8 @@ describe('ArrowFunctionExpression', () => {
           code: '((...a)=>{a()})(ext)',
           errors: [
             {
-              message: 'Calling a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of calling function parameter',
               type: 'Identifier'
             }
           ]
@@ -208,7 +212,8 @@ describe('ArrowFunctionExpression', () => {
           code: '(({a})=>{a()})(ext)',
           errors: [
             {
-              message: 'Calling a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of calling function parameter',
               type: 'Identifier'
             }
           ]
@@ -217,7 +222,8 @@ describe('ArrowFunctionExpression', () => {
           code: '(a=>{a.x = 1})(ext)',
           errors: [
             {
-              message: 'Mutating a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating function parameter',
               type: 'Identifier'
             }
           ]
@@ -226,7 +232,8 @@ describe('ArrowFunctionExpression', () => {
           code: '(a=>{const b = a;b.x = 1})(ext)',
           errors: [
             {
-              message: 'Mutating a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating function parameter',
               type: 'Identifier'
             }
           ]
@@ -235,7 +242,8 @@ describe('ArrowFunctionExpression', () => {
           code: '((...a)=>{a.x = 1})(ext)',
           errors: [
             {
-              message: 'Mutating a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating function parameter',
               type: 'Identifier'
             }
           ]
@@ -244,7 +252,8 @@ describe('ArrowFunctionExpression', () => {
           code: '(({a})=>{a.x = 1})(ext)',
           errors: [
             {
-              message: 'Mutating a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating function parameter',
               type: 'Identifier'
             }
           ]
@@ -279,7 +288,8 @@ describe(
         code: 'ext = 1',
         errors: [
           {
-            message: 'Assignment to a global variable is a side-effect',
+            message:
+              'Cannot determine side-effects of assignment to global variable',
             type: 'Identifier'
           }
         ]
@@ -288,7 +298,8 @@ describe(
         code: 'ext += 1',
         errors: [
           {
-            message: 'Assignment to a global variable is a side-effect',
+            message:
+              'Cannot determine side-effects of assignment to global variable',
             type: 'Identifier'
           }
         ]
@@ -297,7 +308,8 @@ describe(
         code: 'ext.x = 1',
         errors: [
           {
-            message: 'Mutating a global variable is a side-effect',
+            message:
+              'Cannot determine side-effects of mutating global variable',
             type: 'Identifier'
           }
         ]
@@ -306,7 +318,7 @@ describe(
         code: 'const x = {};x[ext()] = 1',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -315,7 +327,8 @@ describe(
         code: 'this.x = 1',
         errors: [
           {
-            message: 'Mutating an unknown this value is a side-effect',
+            message:
+              'Cannot determine side-effects of mutating unknown this value',
             type: 'ThisExpression'
           }
         ]
@@ -338,7 +351,7 @@ describe(
         code: 'const {x = ext()} = {}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -347,7 +360,7 @@ describe(
         code: 'const {y: {x = ext()} = {}} = {}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -367,7 +380,7 @@ describe(
         code: 'const x = async ()=>{await ext()}; x()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -385,7 +398,7 @@ describe(
         code: 'const x = 1 + ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -394,7 +407,7 @@ describe(
         code: 'const x = ext() + 1',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -416,7 +429,7 @@ describe(
         code: '{ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -425,7 +438,7 @@ describe(
         code: 'var x=()=>{};{var x=ext}x()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -434,7 +447,7 @@ describe(
         code: 'var x=ext;{x(); var x=()=>{}}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -461,7 +474,7 @@ describe('CallExpression', () => {
         code: '(()=>{})(ext(), 1)',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -470,7 +483,7 @@ describe('CallExpression', () => {
         code: '(()=>{})(1, ext())',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -486,7 +499,8 @@ describe('CallExpression', () => {
           code: 'const x = ()=>ext; const y = x(); y()',
           errors: [
             {
-              message: 'Calling the result of a function call is a side-effect',
+              message:
+                'Cannot determine side-effects of calling function return value',
               type: 'CallExpression'
             }
           ]
@@ -504,7 +518,7 @@ describe('CallExpression', () => {
           errors: [
             {
               message:
-                'Mutating the result of a function call is a side-effect',
+                'Cannot determine side-effects of mutating function return value',
               type: 'CallExpression'
             }
           ]
@@ -527,7 +541,7 @@ describe(
         code: 'try {} catch (error) {ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -536,7 +550,7 @@ describe(
         code: 'var x=()=>{}; try {} catch (error) {var x=ext}; x()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -553,7 +567,7 @@ describe('ClassBody', () => {
         code: 'class x {[ext()](){}}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -575,7 +589,8 @@ describe('ClassBody', () => {
           code: 'class x {constructor(){ext()}}; new x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -584,7 +599,8 @@ describe('ClassBody', () => {
           code: 'class x extends ext {}; new x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -593,7 +609,8 @@ describe('ClassBody', () => {
           code: 'class y {constructor(){ext()}}; class x extends y {}; new x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -603,7 +620,8 @@ describe('ClassBody', () => {
             'class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; new x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -621,7 +639,7 @@ describe('ClassDeclaration', () => {
         code: 'class x extends ext() {}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -630,7 +648,7 @@ describe('ClassDeclaration', () => {
         code: 'class x {[ext()](){}}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -647,7 +665,8 @@ describe('ClassDeclaration', () => {
           code: 'class x {constructor(){ext()}}; new x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -656,7 +675,8 @@ describe('ClassDeclaration', () => {
           code: 'class x extends ext {}; new x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -674,7 +694,7 @@ describe('ClassExpression', () => {
         code: '(class extends ext() {})',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -683,7 +703,7 @@ describe('ClassExpression', () => {
         code: '(class {[ext()](){}})',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -700,7 +720,8 @@ describe('ClassExpression', () => {
           code: 'new (class {constructor(){ext()}})()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -709,7 +730,8 @@ describe('ClassExpression', () => {
           code: 'new (class extends ext {})()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -732,7 +754,7 @@ describe('ConditionalExpression', () => {
         code: 'ext() ? 1 : 2',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -741,7 +763,7 @@ describe('ConditionalExpression', () => {
         code: 'ext ? ext() : 2',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -750,7 +772,7 @@ describe('ConditionalExpression', () => {
         code: 'ext ? 1 : ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -759,7 +781,7 @@ describe('ConditionalExpression', () => {
         code: 'if (false ? false : true) ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -780,7 +802,8 @@ describe('ConditionalExpression', () => {
           code: 'const x = ()=>{}; (true ? ext : x)()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -789,7 +812,8 @@ describe('ConditionalExpression', () => {
           code: 'const x = ()=>{}; (false ? x : ext)()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -798,7 +822,8 @@ describe('ConditionalExpression', () => {
           code: 'const x = ()=>{}; (ext ? x : ext)()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -845,7 +870,7 @@ describe(
         code: 'do {} while(ext())',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -854,7 +879,7 @@ describe(
         code: 'do ext(); while(true)',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -863,7 +888,7 @@ describe(
         code: 'do {ext()} while(true)',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -902,7 +927,7 @@ describe(
         code: 'export default ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -912,7 +937,7 @@ describe(
           'export default /* tree-shaking no-side-effects-when-called */ ext',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -922,7 +947,7 @@ describe(
           'const x = ext; export default /* tree-shaking no-side-effects-when-called */ x',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -950,7 +975,7 @@ describe(
         code: 'export const x = ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -960,7 +985,7 @@ describe(
           'export const /* tree-shaking no-side-effects-when-called */ x = ext',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -970,7 +995,7 @@ describe(
           'export function /* tree-shaking no-side-effects-when-called */ x(){ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -980,7 +1005,7 @@ describe(
           'const x = ext; export {/* tree-shaking no-side-effects-when-called */ x}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -998,7 +1023,7 @@ describe(
         code: 'ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1016,7 +1041,8 @@ describe(
         code: 'for(ext in {a: 1}){}',
         errors: [
           {
-            message: 'Assignment to a global variable is a side-effect',
+            message:
+              'Cannot determine side-effects of assignment to global variable',
             type: 'Identifier'
           }
         ]
@@ -1025,7 +1051,7 @@ describe(
         code: 'for(const x in ext()){}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1034,7 +1060,7 @@ describe(
         code: 'for(const x in {a: 1}){ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1043,7 +1069,7 @@ describe(
         code: 'for(const x in {a: 1}) ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1061,7 +1087,8 @@ describe(
         code: 'for(ext of {a: 1}){}',
         errors: [
           {
-            message: 'Assignment to a global variable is a side-effect',
+            message:
+              'Cannot determine side-effects of assignment to global variable',
             type: 'Identifier'
           }
         ]
@@ -1070,7 +1097,7 @@ describe(
         code: 'for(const x of ext()){}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1079,7 +1106,7 @@ describe(
         code: 'for(const x of {a: 1}){ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1088,7 +1115,7 @@ describe(
         code: 'for(const x of {a: 1}) ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1106,7 +1133,7 @@ describe(
         code: 'for(ext();;){}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1115,7 +1142,7 @@ describe(
         code: 'for(;ext();){}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1124,7 +1151,7 @@ describe(
         code: 'for(;true;ext()){}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1133,7 +1160,7 @@ describe(
         code: 'for(;true;) ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1142,7 +1169,7 @@ describe(
         code: 'for(;true;){ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1170,7 +1197,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x(){ext()}; x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1179,7 +1207,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x(){ext()}; new x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1188,7 +1217,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x(a = ext()){}; x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1197,7 +1227,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x(a){a()}; x(ext)',
           errors: [
             {
-              message: 'Calling a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of calling function parameter',
               type: 'Identifier'
             }
           ]
@@ -1206,7 +1237,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x(...a){a()}; x(ext)',
           errors: [
             {
-              message: 'Calling a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of calling function parameter',
               type: 'Identifier'
             }
           ]
@@ -1215,7 +1247,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x({a}){a()}; x(ext)',
           errors: [
             {
-              message: 'Calling a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of calling function parameter',
               type: 'Identifier'
             }
           ]
@@ -1224,7 +1257,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x(a){a(); a(); a()}; x(ext)',
           errors: [
             {
-              message: 'Calling a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of calling function parameter',
               type: 'Identifier'
             }
           ]
@@ -1233,7 +1267,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x(a){a.y = 1}; x(ext)',
           errors: [
             {
-              message: 'Mutating a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating function parameter',
               type: 'Identifier'
             }
           ]
@@ -1242,7 +1277,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x(...a){a.y = 1}; x(ext)',
           errors: [
             {
-              message: 'Mutating a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating function parameter',
               type: 'Identifier'
             }
           ]
@@ -1251,7 +1287,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x({a}){a.y = 1}; x(ext)',
           errors: [
             {
-              message: 'Mutating a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating function parameter',
               type: 'Identifier'
             }
           ]
@@ -1260,7 +1297,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x(a){a.y = 1; a.y = 2; a.y = 3}; x(ext)',
           errors: [
             {
-              message: 'Mutating a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating function parameter',
               type: 'Identifier'
             }
           ]
@@ -1269,7 +1307,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x(){ext = 1}; x(); x(); x()',
           errors: [
             {
-              message: 'Assignment to a global variable is a side-effect',
+              message:
+                'Cannot determine side-effects of assignment to global variable',
               type: 'Identifier'
             }
           ]
@@ -1278,7 +1317,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x(){ext = 1}; new x(); new x(); new x()',
           errors: [
             {
-              message: 'Assignment to a global variable is a side-effect',
+              message:
+                'Cannot determine side-effects of assignment to global variable',
               type: 'Identifier'
             }
           ]
@@ -1314,7 +1354,8 @@ describe('FunctionExpression', () => {
           code: '(function (){ext()}())',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1323,7 +1364,8 @@ describe('FunctionExpression', () => {
           code: 'new (function (){ext()})()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1332,7 +1374,8 @@ describe('FunctionExpression', () => {
           code: '(function ({a = ext()}){}())',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1341,7 +1384,8 @@ describe('FunctionExpression', () => {
           code: '(function (a){a()}(ext))',
           errors: [
             {
-              message: 'Calling a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of calling function parameter',
               type: 'Identifier'
             }
           ]
@@ -1350,7 +1394,8 @@ describe('FunctionExpression', () => {
           code: '(function (...a){a()}(ext))',
           errors: [
             {
-              message: 'Calling a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of calling function parameter',
               type: 'Identifier'
             }
           ]
@@ -1359,7 +1404,8 @@ describe('FunctionExpression', () => {
           code: '(function ({a}){a()}(ext))',
           errors: [
             {
-              message: 'Calling a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of calling function parameter',
               type: 'Identifier'
             }
           ]
@@ -1368,7 +1414,8 @@ describe('FunctionExpression', () => {
           code: '(function (a){a.x = 1}(ext))',
           errors: [
             {
-              message: 'Mutating a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating function parameter',
               type: 'Identifier'
             }
           ]
@@ -1377,7 +1424,8 @@ describe('FunctionExpression', () => {
           code: '(function (a){const b = a;b.x = 1}(ext))',
           errors: [
             {
-              message: 'Mutating a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating function parameter',
               type: 'Identifier'
             }
           ]
@@ -1386,7 +1434,8 @@ describe('FunctionExpression', () => {
           code: '(function (...a){a.x = 1}(ext))',
           errors: [
             {
-              message: 'Mutating a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating function parameter',
               type: 'Identifier'
             }
           ]
@@ -1395,7 +1444,8 @@ describe('FunctionExpression', () => {
           code: '(function ({a}){a.x = 1}(ext))',
           errors: [
             {
-              message: 'Mutating a function parameter is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating function parameter',
               type: 'Identifier'
             }
           ]
@@ -1426,7 +1476,8 @@ describe('Identifier', () => {
           code: 'ext()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1435,7 +1486,8 @@ describe('Identifier', () => {
           code: 'const x = ext; x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1444,7 +1496,8 @@ describe('Identifier', () => {
           code: 'let x = ()=>{}; x = ext; x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1453,7 +1506,8 @@ describe('Identifier', () => {
           code: 'var x = ()=>{}; var x = ext; x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1462,7 +1516,8 @@ describe('Identifier', () => {
           code: 'const x = ()=>{ext()}; x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1471,7 +1526,8 @@ describe('Identifier', () => {
           code: 'const x = ()=>{ext = 1}; x(); x(); x()',
           errors: [
             {
-              message: 'Assignment to a global variable is a side-effect',
+              message:
+                'Cannot determine side-effects of assignment to global variable',
               type: 'Identifier'
             }
           ]
@@ -1480,7 +1536,8 @@ describe('Identifier', () => {
           code: 'let x = ()=>{}; const y = ()=>{x()}; x = ext; y()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1489,7 +1546,8 @@ describe('Identifier', () => {
           code: 'var x = ()=>{}; const y = ()=>{x()}; var x = ext; y()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -1499,7 +1557,7 @@ describe('Identifier', () => {
           errors: [
             {
               message:
-                'Could not determine side-effects of calling result of destructuring assignment',
+                'Cannot determine side-effects of calling destructured variable',
               type: 'Identifier'
             }
           ]
@@ -1509,7 +1567,7 @@ describe('Identifier', () => {
           errors: [
             {
               message:
-                'Could not determine side-effects of calling result of destructuring assignment',
+                'Cannot determine side-effects of calling destructured variable',
               type: 'Identifier'
             }
           ]
@@ -1527,7 +1585,8 @@ describe('Identifier', () => {
           code: 'var x = ext; x.y = 1',
           errors: [
             {
-              message: 'Mutating a global variable is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating global variable',
               type: 'Identifier'
             }
           ]
@@ -1536,7 +1595,8 @@ describe('Identifier', () => {
           code: 'var x = {}; x = ext; x.y = 1',
           errors: [
             {
-              message: 'Mutating a global variable is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating global variable',
               type: 'Identifier'
             }
           ]
@@ -1545,7 +1605,8 @@ describe('Identifier', () => {
           code: 'var x = {}; var x = ext; x.y = 1',
           errors: [
             {
-              message: 'Mutating a global variable is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating global variable',
               type: 'Identifier'
             }
           ]
@@ -1554,7 +1615,8 @@ describe('Identifier', () => {
           code: 'var x = {}; x = ext; x.y = 1; x.y = 1; x.y = 1',
           errors: [
             {
-              message: 'Mutating a global variable is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating global variable',
               type: 'Identifier'
             }
           ]
@@ -1564,7 +1626,7 @@ describe('Identifier', () => {
           errors: [
             {
               message:
-                'Mutating the result of a destructuring assignment is a side-effect',
+                'Cannot determine side-effects of mutating destructured variable',
               type: 'Identifier'
             }
           ]
@@ -1587,7 +1649,7 @@ describe(
         code: 'if (ext()>0){}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1596,7 +1658,7 @@ describe(
         code: 'if (1>0){ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1605,7 +1667,7 @@ describe(
         code: 'if (1<0){} else {ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1614,11 +1676,11 @@ describe(
         code: 'if (ext>0){ext()} else {ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           },
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1647,7 +1709,8 @@ describe(
         code: 'import x from "./import-default"; x()',
         errors: [
           {
-            message: 'Calling an import is a side-effect',
+            message:
+              'Cannot determine side-effects of calling imported function',
             type: 'Identifier'
           }
         ]
@@ -1656,7 +1719,8 @@ describe(
         code: 'import x from "./import-default"; x.z = 1',
         errors: [
           {
-            message: 'Mutating an import is a side-effect',
+            message:
+              'Cannot determine side-effects of mutating imported variable',
             type: 'Identifier'
           }
         ]
@@ -1665,7 +1729,8 @@ describe(
         code: 'import {x} from "./import"; x()',
         errors: [
           {
-            message: 'Calling an import is a side-effect',
+            message:
+              'Cannot determine side-effects of calling imported function',
             type: 'Identifier'
           }
         ]
@@ -1674,7 +1739,8 @@ describe(
         code: 'import {x} from "./import"; x.z = 1',
         errors: [
           {
-            message: 'Mutating an import is a side-effect',
+            message:
+              'Cannot determine side-effects of mutating imported variable',
             type: 'Identifier'
           }
         ]
@@ -1683,7 +1749,8 @@ describe(
         code: 'import {x as y} from "./import"; y()',
         errors: [
           {
-            message: 'Calling an import is a side-effect',
+            message:
+              'Cannot determine side-effects of calling imported function',
             type: 'Identifier'
           }
         ]
@@ -1692,7 +1759,8 @@ describe(
         code: 'import {x as y} from "./import"; y.a = 1',
         errors: [
           {
-            message: 'Mutating an import is a side-effect',
+            message:
+              'Cannot determine side-effects of mutating imported variable',
             type: 'Identifier'
           }
         ]
@@ -1701,7 +1769,7 @@ describe(
         code: 'import * as y from "./import"; y.x()',
         errors: [
           {
-            message: 'Could not determine side-effects of member function',
+            message: 'Cannot determine side-effects of calling member function',
             type: 'Identifier'
           }
         ]
@@ -1710,7 +1778,8 @@ describe(
         code: 'import * as y from "./import"; y.x = 1',
         errors: [
           {
-            message: 'Mutating an import is a side-effect',
+            message:
+              'Cannot determine side-effects of mutating imported variable',
             type: 'Identifier'
           }
         ]
@@ -1728,7 +1797,7 @@ describe(
         code: 'loop: for(;true;){ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1746,7 +1815,7 @@ describe(
         code: 'if (true) ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1772,7 +1841,7 @@ describe(
         code: 'ext() && true',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1781,7 +1850,7 @@ describe(
         code: 'true && ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1790,7 +1859,7 @@ describe(
         code: 'false || ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1799,7 +1868,7 @@ describe(
         code: 'if (true && true) ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1808,7 +1877,7 @@ describe(
         code: 'if (false || true) ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1817,7 +1886,7 @@ describe(
         code: 'if (true || false) ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1826,7 +1895,7 @@ describe(
         code: 'if (true || true) ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1843,7 +1912,7 @@ describe('MemberExpression', () => {
         code: 'const x = {};const y = x[ext()]',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1860,7 +1929,8 @@ describe('MemberExpression', () => {
           code: 'ext.x()',
           errors: [
             {
-              message: 'Could not determine side-effects of member function',
+              message:
+                'Cannot determine side-effects of calling member function',
               type: 'Identifier'
             }
           ]
@@ -1869,7 +1939,8 @@ describe('MemberExpression', () => {
           code: 'const x = {}; x.y()',
           errors: [
             {
-              message: 'Could not determine side-effects of member function',
+              message:
+                'Cannot determine side-effects of calling member function',
               type: 'Identifier'
             }
           ]
@@ -1878,7 +1949,8 @@ describe('MemberExpression', () => {
           code: 'const x = ()=>{}; x().y()',
           errors: [
             {
-              message: 'Could not determine side-effects of member function',
+              message:
+                'Cannot determine side-effects of calling member function',
               type: 'Identifier'
             }
           ]
@@ -1887,7 +1959,8 @@ describe('MemberExpression', () => {
           code: 'const Object = {}; const x = Object.keys({})',
           errors: [
             {
-              message: 'Could not determine side-effects of member function',
+              message:
+                'Cannot determine side-effects of calling member function',
               type: 'Identifier'
             }
           ]
@@ -1896,11 +1969,13 @@ describe('MemberExpression', () => {
           code: 'const x = {}; x[ext()]()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             },
             {
-              message: 'Could not determine side-effects of member function',
+              message:
+                'Cannot determine side-effects of calling member function',
               type: 'CallExpression'
             }
           ]
@@ -1918,7 +1993,7 @@ describe('MemberExpression', () => {
           code: 'const x = {y: ext};x.y.z = 1',
           errors: [
             {
-              message: 'Mutating members of an object is a side-effect',
+              message: 'Cannot determine side-effects of mutating member',
               type: 'Identifier'
             }
           ]
@@ -1927,7 +2002,7 @@ describe('MemberExpression', () => {
           code: 'const x = {y:ext};const y = x.y; y.z = 1',
           errors: [
             {
-              message: 'Mutating members of an object is a side-effect',
+              message: 'Cannot determine side-effects of mutating member',
               type: 'Identifier'
             }
           ]
@@ -1936,7 +2011,7 @@ describe('MemberExpression', () => {
           code: 'const x = {y: ext};delete x.y.z',
           errors: [
             {
-              message: 'Mutating members of an object is a side-effect',
+              message: 'Cannot determine side-effects of mutating member',
               type: 'Identifier'
             }
           ]
@@ -1962,7 +2037,7 @@ describe(
         code: 'class x {static [ext()](){}}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -1983,7 +2058,7 @@ describe(
         code: 'new ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2005,7 +2080,7 @@ describe(
         code: 'const x = {y: ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2014,7 +2089,7 @@ describe(
         code: 'const x = {["y"]: ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2023,7 +2098,7 @@ describe(
         code: 'const x = {[ext()]: 1}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2041,7 +2116,7 @@ describe(
         code: 'const {[ext()]: x} = {}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2066,7 +2141,7 @@ describe(
         code: '(()=>{return ext()})()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2084,7 +2159,7 @@ describe(
         code: 'ext(), 1',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2093,7 +2168,7 @@ describe(
         code: '1, ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2102,7 +2177,7 @@ describe(
         code: 'if (1, true) ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2111,7 +2186,7 @@ describe(
         code: 'if (1, ext) ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2131,7 +2206,8 @@ describe('Super', () => {
             'class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; new x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
@@ -2141,7 +2217,7 @@ describe('Super', () => {
           errors: [
             {
               message:
-                'Could not determine side effects of super class constructor',
+                'Cannot determine side-effects of calling super class constructor',
               type: 'Super'
             }
           ]
@@ -2151,7 +2227,8 @@ describe('Super', () => {
             'class y{}; class x extends y{constructor(){super(); super.test()}}; new x()',
           errors: [
             {
-              message: 'Could not determine side-effects of member function',
+              message:
+                'Cannot determine side-effects of calling member function',
               type: 'Identifier'
             }
           ]
@@ -2170,7 +2247,7 @@ describe(
         code: 'switch(ext){case ext():}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2179,7 +2256,7 @@ describe(
         code: 'switch(ext){case 1:ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2201,7 +2278,7 @@ describe(
         code: 'switch(ext()){}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2210,7 +2287,7 @@ describe(
         code: 'var x=()=>{}; switch(ext){case 1:var x=ext}; x()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2228,7 +2305,7 @@ describe(
         code: 'ext``',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2238,7 +2315,7 @@ describe(
         code: 'const x = ()=>{}; x`${ext()}`',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2264,7 +2341,7 @@ describe(
         code: '`Literal ${ext()}`',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2292,7 +2369,8 @@ describe('ThisExpression', () => {
           code: 'this.x = 1',
           errors: [
             {
-              message: 'Mutating an unknown this value is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating unknown this value',
               type: 'ThisExpression'
             }
           ]
@@ -2301,7 +2379,8 @@ describe('ThisExpression', () => {
           code: '(()=>{this.x = 1})()',
           errors: [
             {
-              message: 'Mutating an unknown this value is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating unknown this value',
               type: 'ThisExpression'
             }
           ]
@@ -2310,7 +2389,8 @@ describe('ThisExpression', () => {
           code: '(function(){this.x = 1}())',
           errors: [
             {
-              message: 'Mutating an unknown this value is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating unknown this value',
               type: 'ThisExpression'
             }
           ]
@@ -2319,7 +2399,8 @@ describe('ThisExpression', () => {
           code: 'new (function (){(function(){this.x = 1}())})()',
           errors: [
             {
-              message: 'Mutating an unknown this value is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating unknown this value',
               type: 'ThisExpression'
             }
           ]
@@ -2328,7 +2409,8 @@ describe('ThisExpression', () => {
           code: 'function x(){this.y = 1}; x()',
           errors: [
             {
-              message: 'Mutating an unknown this value is a side-effect',
+              message:
+                'Cannot determine side-effects of mutating unknown this value',
               type: 'ThisExpression'
             }
           ]
@@ -2368,7 +2450,7 @@ describe(
         code: 'try {ext()} catch (error) {}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2377,7 +2459,7 @@ describe(
         code: 'try {} finally {ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2395,7 +2477,7 @@ describe(
         code: '!ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2404,7 +2486,8 @@ describe(
         code: 'delete ext.x',
         errors: [
           {
-            message: 'Mutating a global variable is a side-effect',
+            message:
+              'Cannot determine side-effects of mutating global variable',
             type: 'Identifier'
           }
         ]
@@ -2413,7 +2496,8 @@ describe(
         code: 'delete ext["x"]',
         errors: [
           {
-            message: 'Mutating a global variable is a side-effect',
+            message:
+              'Cannot determine side-effects of mutating global variable',
             type: 'Identifier'
           }
         ]
@@ -2423,7 +2507,7 @@ describe(
         errors: [
           {
             message:
-              'Using delete on anything but a MemberExpression is a side-effect',
+              'Cannot determine side-effects of deleting anything but a MemberExpression',
             type: 'CallExpression'
           }
         ]
@@ -2441,7 +2525,8 @@ describe(
         code: 'ext++',
         errors: [
           {
-            message: 'Assignment to a global variable is a side-effect',
+            message:
+              'Cannot determine side-effects of assignment to global variable',
             type: 'Identifier'
           }
         ]
@@ -2450,7 +2535,7 @@ describe(
         code: 'const x={};x[ext()]++',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2468,7 +2553,7 @@ describe(
         code: 'const x = ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2492,11 +2577,11 @@ describe(
         code: 'var x = ext(),y = ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           },
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2505,11 +2590,11 @@ describe(
         code: 'const x = ext(),y = ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           },
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2518,11 +2603,11 @@ describe(
         code: 'let x = ext(),y = ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           },
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2531,7 +2616,7 @@ describe(
         code: 'const {x = ext()} = {}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2553,7 +2638,7 @@ describe(
         code: 'while(ext()){}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2562,7 +2647,7 @@ describe(
         code: 'while(true)ext()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2571,7 +2656,7 @@ describe(
         code: 'while(true){ext()}',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2591,7 +2676,7 @@ describe('YieldExpression', () => {
         code: 'function* x(){yield ext()}; x()',
         errors: [
           {
-            message: 'Could not determine side-effects of global function',
+            message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
           }
         ]
@@ -2608,7 +2693,8 @@ describe('YieldExpression', () => {
           code: 'function* x(){yield ext()}; x()',
           errors: [
             {
-              message: 'Could not determine side-effects of global function',
+              message:
+                'Cannot determine side-effects of calling global function',
               type: 'Identifier'
             }
           ]
