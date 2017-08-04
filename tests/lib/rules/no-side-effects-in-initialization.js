@@ -67,24 +67,28 @@ const getEsLintErrors = code =>
     rules: { [RULE_NAME]: [1, { compatibility: 'rollup' }] }
   })
 
+const getErrorFreeCodeKeptMessage = (
+  code,
+  rollupOutput
+) => `${code} was not removed by rollup even though it contained no errors. Rollup output:
+${rollupOutput}\n`
+
+const getErroneousCodeRemovedMessage = (
+  code,
+  esLintErrors
+) => `${code} was removed by rollup even though it contained errors:
+${esLintErrors.map(error => `- ${error.message}`).join('\n')}\n`
+
 const verifyCodeWithRollup = code => {
   it(`reflects rollup's result for: ${code}`, () => {
     const esLintErrors = getEsLintErrors(code)
     return createRollupOutput(code)
+      .catch(error => `Rollup threw error: ${error.message}`)
       .then(output => {
         if (esLintErrors.length === 0 && output.length > 0) {
-          throw new Error(`${code} was not removed by rollup even though it contained no errors. Rollup output:
-${output}\n`)
+          throw new Error(getErrorFreeCodeKeptMessage(code, output))
         } else if (esLintErrors.length > 0 && output.length === 0) {
-          console.warn(`${code} was removed by rollup even though it contained errors:
-${esLintErrors.map(error => `- ${error.message}`).join('\n')}\n`)
-        }
-      })
-      .catch(error => {
-        if (esLintErrors.length > 0) {
-          console.warn(error.message)
-        } else {
-          throw error
+          console.warn(getErroneousCodeRemovedMessage(code, esLintErrors))
         }
       })
   })
