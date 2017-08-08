@@ -745,6 +745,40 @@ describe('ClassExpression', () => {
   )
 })
 
+describe(
+  'ClassProperty',
+  testRule({
+    valid: [
+      {
+        code: 'class x {y = 1}',
+        parser: 'babel-eslint'
+      }
+    ],
+    invalid: [
+      {
+        code: 'class x {[ext()] = 1}',
+        parser: 'babel-eslint',
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'class x {y = ext()}',
+        parser: 'babel-eslint',
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
 describe('ConditionalExpression', () => {
   testRule({
     valid: [
