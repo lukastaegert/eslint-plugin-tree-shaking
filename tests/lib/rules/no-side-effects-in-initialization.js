@@ -1827,6 +1827,244 @@ describe(
 )
 
 describe(
+  'JSXAttribute',
+  testRule({
+    valid: [
+      {
+        code: 'class X {}; <X test="3"/>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      },
+      {
+        code: 'class X {}; <X test={3}/>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      },
+      {
+        code: 'class X {}; <X test=<X/>/>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      }
+    ],
+    invalid: [
+      {
+        code: 'class X {}; <X test={ext()}/>',
+        parserOptions: { ecmaFeatures: { jsx: true } },
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'class X {}; class Y {constructor(){ext()}}; <X test=<Y/>/>',
+        parserOptions: { ecmaFeatures: { jsx: true } },
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
+  'JSXElement',
+  testRule({
+    valid: [
+      {
+        code: 'class X {}; <X/>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      },
+      {
+        code: 'class X {}; <X>Text</X>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      }
+    ],
+    invalid: [
+      {
+        code: 'class X {constructor(){ext()}}; <X/>',
+        parserOptions: { ecmaFeatures: { jsx: true } },
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'class X {}; <X>{ext()}</X>',
+        parserOptions: { ecmaFeatures: { jsx: true } },
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
+  'JSXEmptyExpression',
+  testRule({
+    valid: [
+      {
+        code: 'class X {}; <X>{}</X>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      }
+    ]
+  })
+)
+
+describe(
+  'JSXExpressionContainer',
+  testRule({
+    valid: [
+      {
+        code: 'class X {}; <X>{3}</X>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      }
+    ],
+    invalid: [
+      {
+        code: 'class X {}; <X>{ext()}</X>',
+        parserOptions: { ecmaFeatures: { jsx: true } },
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
+  'JSXIdentifier',
+  testRule({
+    valid: [
+      {
+        code: 'class X {}; <X/>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      },
+      {
+        code: 'const X = class {constructor() {this.x = 1}}; <X/>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      }
+    ],
+    invalid: [
+      {
+        code: 'class X {constructor(){ext()}}; <X/>',
+        parserOptions: { ecmaFeatures: { jsx: true } },
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'const X = class {constructor(){ext()}}; <X/>',
+        parserOptions: { ecmaFeatures: { jsx: true } },
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: '<Ext/>',
+        parserOptions: { ecmaFeatures: { jsx: true } },
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'JSXIdentifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
+  'JSXMemberExpression',
+  testRule({
+    invalid: [
+      {
+        code: 'const X = {Y: ext}; <X.Y />',
+        parserOptions: { ecmaFeatures: { jsx: true } },
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling member function',
+            type: 'JSXIdentifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
+  'JSXOpeningElement',
+  testRule({
+    valid: [
+      {
+        code: 'class X {}; <X/>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      },
+      {
+        code: 'class X {}; <X></X>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      },
+      {
+        code: 'class X {}; <X test="3"/>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      }
+    ],
+    invalid: [
+      {
+        code: 'class X {}; <X test={ext()}/>',
+        parserOptions: { ecmaFeatures: { jsx: true } },
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
+  'JSXSpreadAttribute',
+  testRule({
+    valid: [
+      {
+        code: 'class X {};<X {...{x: 3}}/>',
+        parserOptions: { ecmaFeatures: { jsx: true } }
+      }
+    ],
+    invalid: [
+      {
+        code: 'class X {};<X {...{x: ext()}}/>',
+        parserOptions: { ecmaFeatures: { jsx: true } },
+        errors: [
+          {
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
+          }
+        ]
+      }
+    ]
+  })
+)
+
+describe(
   'LabeledStatement',
   testRule({
     valid: ['loop: for(;true;){continue loop}'],
