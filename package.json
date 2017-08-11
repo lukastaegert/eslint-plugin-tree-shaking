@@ -36,7 +36,7 @@
     "lint-staged": "^4.0.3",
     "mocha": "^3.5.0",
     "prettier-standard": "^6.0.0",
-    "rollup": "^0.45.2",
+    "rollup": "^0.46.0",
     "semantic-release": "^6.3.6",
     "standard": "^10.0.3",
     "validate-commit-msg": "^2.14.0"
