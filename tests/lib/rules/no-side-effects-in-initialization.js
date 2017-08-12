@@ -11,8 +11,6 @@
  * * Assigning to a global variable by a ForInStatement/ForOfStatement is ignored
  * * Assigning values to members of MemberExpressions is ignored even though this could mutate a
  *   global variable
- * * Variable shadowing does not work properly in SwitchScopes
- * * Side-effects in TaggedTemplateLiterals are ignored
  * * Manually constructing an iterable will not trigger side-effects in the iterator function
  * * Calling an imported arrow function always seems to have side-effects
  */
@@ -945,7 +943,7 @@ describe(
 describe(
   'ExportAllDeclaration',
   testRule({
-    valid: ['export * from "x"']
+    valid: ['export * from "./import"']
   })
 )
 
