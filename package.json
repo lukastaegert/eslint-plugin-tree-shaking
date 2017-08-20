@@ -49,6 +49,6 @@
     "url": "https://github.com/lukastaegert/eslint-plugin-tree-shaking.git"
   },
   "dependencies": {
-    "rollup": "^0.47.0"
+    "rollup": "^0.48.0"
   }
 }
