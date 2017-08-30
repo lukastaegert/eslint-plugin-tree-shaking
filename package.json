@@ -17,6 +17,7 @@
     "lint": "prettier-standard *.js lib/**/*.js tests/**/*.js",
     "precommit": "lint-staged",
     "commitmsg": "validate-commit-msg",
+    "postcommit": "git reset",
     "prepush": "npm test",
     "postmerge": "npm install && npm prune",
     "postrewrite": "npm install && npm prune",
@@ -47,8 +48,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/lukastaegert/eslint-plugin-tree-shaking.git"
-  },
-  "dependencies": {
-    "rollup": "^0.48.2"
   }
 }
