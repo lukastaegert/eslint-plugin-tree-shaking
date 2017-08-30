@@ -1,16 +1,10 @@
 /* eslint-env mocha */
 
 /* Bugs in rollup:
- * * Reassigning or mutating a variable that has at some point a non-trivial value will be an effect
- *   even if it is never used
  * * Reassigning var with var is handled differently from reassigning without var
- * * Side-effects in function call arguments are ignored
  * * Side-effects in default parameter values are ignored
- * * Side-effects in destructuring default values are ignored
- * * Side-effects in computed properties in assignments and class bodies are ignored
+ * * Side-effects in computed properties in class bodies are ignored
  * * Assigning to a global variable by a ForInStatement/ForOfStatement is ignored
- * * Assigning values to members of MemberExpressions is ignored even though this could mutate a
- *   global variable
  * * Manually constructing an iterable will not trigger side-effects in the iterator function
  * * Calling an imported arrow function always seems to have side-effects
  */
@@ -21,7 +15,6 @@
  * * If a LogicalExpression does not need both arguments to determine its value, do not consider
  *   side-effects in the other argument
  * * SequenceExpressions return their last value
- * * "delete" is not necessarily a side-effect
  * * Properly clean up top-level BlockStatements
  * * Instantiating ES6 classes does not need to be a side-effect
  * * LabeledStatements do not necessarily have side-effects
