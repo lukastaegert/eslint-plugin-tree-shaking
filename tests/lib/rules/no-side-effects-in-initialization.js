@@ -54,7 +54,7 @@ linter.defineRule(RULE_NAME, rule)
 const createRollupOutput = code => {
   fs.writeFileSync(BUNDLER_TEST_FILE, code)
   return rollup
-    .rollup({ entry: BUNDLER_IMPORT_FILE })
+    .rollup({ input: BUNDLER_IMPORT_FILE })
     .then(bundle => bundle.generate({ format: 'es' }))
     .then(result => result.code.trim())
 }
@@ -109,10 +109,10 @@ const testRule = ({ valid = [], invalid = [] }) => () => {
 describe(
   'ArrayExpression',
   testRule({
-    valid: ['[]', '[ext,ext]', '[1,,2,]'],
+    valid: ['const x = []', 'const x = [ext,ext]', 'const x = [1,,2,]'],
     invalid: [
       {
-        code: '[ext()]',
+        code: 'const x = [ext()]',
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
@@ -121,11 +121,21 @@ describe(
         ]
       },
       {
-        code: '[,,ext(),]',
+        code: 'const x = [,,ext(),]',
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: '[ext.x]',
+        errors: [
+          {
+            message:
+              'Cannot determine side-effects of executing ArrayExpression as a statement',
+            type: 'ArrayExpression'
           }
         ]
       }
@@ -162,7 +172,7 @@ describe(
 
 describe('ArrowFunctionExpression', () => {
   testRule({
-    valid: ['a=>{a(); ext()}']
+    valid: ['const x = a=>{a(); ext()}']
   })()
 
   describe(
@@ -394,7 +404,7 @@ describe(
 describe(
   'BinaryExpression',
   testRule({
-    valid: ['1 + 2', 'if (1-1) ext()'],
+    valid: ['const x = 1 + 2', 'if (1-1) ext()'],
     invalid: [
       {
         code: 'const x = 1 + ext()',
@@ -423,8 +433,8 @@ describe(
   testRule({
     valid: [
       '{}',
-      'const x=()=>{};{const x=ext}x()',
-      'const x=ext;{const x=()=>{}; x()}'
+      'const x = ()=>{};{const x = ext}x()',
+      'const x = ext;{const x = ()=>{}; x()}'
     ],
     invalid: [
       {
@@ -535,8 +545,8 @@ describe(
   testRule({
     valid: [
       'try {} catch (error) {}',
-      'const x=()=>{}; try {} catch (error) {const x=ext}; x()',
-      'const x=ext; try {} catch (error) {const x=()=>{}; x()}'
+      'const x = ()=>{}; try {} catch (error) {const x = ext}; x()',
+      'const x = ext; try {} catch (error) {const x = ()=>{}; x()}'
     ],
     invalid: [
       {
@@ -581,10 +591,10 @@ describe('ClassBody', () => {
     'when called',
     testRule({
       valid: [
-        'class x {a(){ext()}}; new x()',
-        'class x {constructor(){}}; new x()',
-        'class y{}; class x extends y{}; new x()',
-        'class y{}; class x extends y{constructor(){super()}}; new x()'
+        'class x {a(){ext()}}; const y = new x()',
+        'class x {constructor(){}}; const y = new x()',
+        'class y{}; class x extends y{}; const z = new x()',
+        'class y{}; class x extends y{constructor(){super()}}; const z = new x()'
       ],
       invalid: [
         {
@@ -592,13 +602,13 @@ describe('ClassBody', () => {
           errors: [
             {
               message:
-                'Cannot determine side-effects of calling global function',
-              type: 'Identifier'
+                'Cannot determine side-effects of executing NewExpression as a statement',
+              type: 'NewExpression'
             }
           ]
         },
         {
-          code: 'class x extends ext {}; new x()',
+          code: 'class x {constructor(){ext()}}; const y = new x()',
           errors: [
             {
               message:
@@ -608,7 +618,7 @@ describe('ClassBody', () => {
           ]
         },
         {
-          code: 'class y {constructor(){ext()}}; class x extends y {}; new x()',
+          code: 'class x extends ext {}; const y =  new x()',
           errors: [
             {
               message:
@@ -619,7 +629,18 @@ describe('ClassBody', () => {
         },
         {
           code:
-            'class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; new x()',
+            'class y {constructor(){ext()}}; class x extends y {}; const z =  new x()',
+          errors: [
+            {
+              message:
+                'Cannot determine side-effects of calling global function',
+              type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code:
+            'class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; const z = new x()',
           errors: [
             {
               message:
@@ -661,10 +682,20 @@ describe('ClassDeclaration', () => {
   describe(
     'when called',
     testRule({
-      valid: ['class x {}; new x()'],
+      valid: ['class x {}; const y = new x()'],
       invalid: [
         {
           code: 'class x {constructor(){ext()}}; new x()',
+          errors: [
+            {
+              message:
+                'Cannot determine side-effects of executing NewExpression as a statement',
+              type: 'NewExpression'
+            }
+          ]
+        },
+        {
+          code: 'class x {constructor(){ext()}}; const y = new x()',
           errors: [
             {
               message:
@@ -674,7 +705,7 @@ describe('ClassDeclaration', () => {
           ]
         },
         {
-          code: 'class x extends ext {}; new x()',
+          code: 'class x extends ext {}; const y = new x()',
           errors: [
             {
               message:
@@ -690,10 +721,10 @@ describe('ClassDeclaration', () => {
 
 describe('ClassExpression', () => {
   testRule({
-    valid: ['(class extends ext {})'],
+    valid: ['const x = class extends ext {}'],
     invalid: [
       {
-        code: '(class extends ext() {})',
+        code: 'const x = class extends ext() {}',
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
@@ -702,7 +733,7 @@ describe('ClassExpression', () => {
         ]
       },
       {
-        code: '(class {[ext()](){}})',
+        code: 'const x = class {[ext()](){}}',
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
@@ -716,10 +747,20 @@ describe('ClassExpression', () => {
   describe(
     'when called',
     testRule({
-      valid: ['new (class {})()'],
+      valid: ['const x = new (class {})()'],
       invalid: [
         {
           code: 'new (class {constructor(){ext()}})()',
+          errors: [
+            {
+              message:
+                'Cannot determine side-effects of executing NewExpression as a statement',
+              type: 'NewExpression'
+            }
+          ]
+        },
+        {
+          code: 'const x = new (class {constructor(){ext()}})()',
           errors: [
             {
               message:
@@ -729,7 +770,7 @@ describe('ClassExpression', () => {
           ]
         },
         {
-          code: 'new (class extends ext {})()',
+          code: 'const x = new (class extends ext {})()',
           errors: [
             {
               message:
@@ -780,14 +821,34 @@ describe(
 describe('ConditionalExpression', () => {
   testRule({
     valid: [
-      'ext ? 1 : 2',
-      'true ? 1 : ext()',
-      'false ? ext() : 2',
+      'const x = ext ? 1 : 2',
+      'const x = true ? 1 : ext()',
+      'const x = false ? ext() : 2',
       'if (true ? false : true) ext()'
     ],
     invalid: [
       {
-        code: 'ext() ? 1 : 2',
+        code: 'ext ? 1 : ext.x',
+        errors: [
+          {
+            message:
+              'Cannot determine side-effects of executing ConditionalExpression as a statement',
+            type: 'ConditionalExpression'
+          }
+        ]
+      },
+      {
+        code: 'ext ? ext.x : 1',
+        errors: [
+          {
+            message:
+              'Cannot determine side-effects of executing ConditionalExpression as a statement',
+            type: 'ConditionalExpression'
+          }
+        ]
+      },
+      {
+        code: 'const x = ext() ? 1 : 2',
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
@@ -796,7 +857,7 @@ describe('ConditionalExpression', () => {
         ]
       },
       {
-        code: 'ext ? ext() : 2',
+        code: 'const x = ext ? ext() : 2',
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
@@ -805,7 +866,7 @@ describe('ConditionalExpression', () => {
         ]
       },
       {
-        code: 'ext ? 1 : ext()',
+        code: 'const x = ext ? 1 : ext()',
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
@@ -1240,12 +1301,22 @@ describe('FunctionDeclaration', () => {
           ]
         },
         {
-          code: 'function x(){ext()}; new x()',
+          code: 'function x(){ext()}; const y = new x()',
           errors: [
             {
               message:
                 'Cannot determine side-effects of calling global function',
               type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'function x(){ext()}; new x()',
+          errors: [
+            {
+              message:
+                'Cannot determine side-effects of executing NewExpression as a statement',
+              type: 'NewExpression'
             }
           ]
         },
@@ -1350,7 +1421,8 @@ describe('FunctionDeclaration', () => {
           ]
         },
         {
-          code: 'function x(){ext = 1}; new x(); new x(); new x()',
+          code:
+            'function x(){ext = 1}; const y = new x(); y = new x(); y = new x()',
           errors: [
             {
               message:
@@ -1373,7 +1445,7 @@ describe('FunctionDeclaration', () => {
 
 describe('FunctionExpression', () => {
   testRule({
-    valid: ['(function (a){a(); ext()})']
+    valid: ['const x = function (a){a(); ext()}']
   })()
 
   describe(
@@ -1397,12 +1469,22 @@ describe('FunctionExpression', () => {
           ]
         },
         {
-          code: 'new (function (){ext()})()',
+          code: 'const x = new (function (){ext()})()',
           errors: [
             {
               message:
                 'Cannot determine side-effects of calling global function',
               type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'new (function (){ext()})()',
+          errors: [
+            {
+              message:
+                'Cannot determine side-effects of executing NewExpression as a statement',
+              type: 'NewExpression'
             }
           ]
         },
@@ -1493,7 +1575,7 @@ describe('FunctionExpression', () => {
 
 describe('Identifier', () => {
   testRule({
-    valid: ['var x;x']
+    valid: ['var x;x = 1']
   })()
 
   describe(
@@ -1829,21 +1911,21 @@ describe(
   testRule({
     valid: [
       {
-        code: 'class X {}; <X test="3"/>',
+        code: 'class X {}; const x = <X test="3"/>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       },
       {
-        code: 'class X {}; <X test={3}/>',
+        code: 'class X {}; const x = <X test={3}/>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       },
       {
-        code: 'class X {}; <X test=<X/>/>',
+        code: 'class X {}; const x = <X test=<X/>/>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       }
     ],
     invalid: [
       {
-        code: 'class X {}; <X test={ext()}/>',
+        code: 'class X {}; const x = <X test={ext()}/>',
         parserOptions: { ecmaFeatures: { jsx: true } },
         errors: [
           {
@@ -1853,7 +1935,8 @@ describe(
         ]
       },
       {
-        code: 'class X {}; class Y {constructor(){ext()}}; <X test=<Y/>/>',
+        code:
+          'class X {}; class Y {constructor(){ext()}}; const x = <X test=<Y/>/>',
         parserOptions: { ecmaFeatures: { jsx: true } },
         errors: [
           {
@@ -1871,17 +1954,17 @@ describe(
   testRule({
     valid: [
       {
-        code: 'class X {}; <X/>',
+        code: 'class X {}; const x = <X/>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       },
       {
-        code: 'class X {}; <X>Text</X>',
+        code: 'class X {}; const x = <X>Text</X>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       }
     ],
     invalid: [
       {
-        code: 'class X {constructor(){ext()}}; <X/>',
+        code: 'class X {constructor(){ext()}}; const x = <X/>',
         parserOptions: { ecmaFeatures: { jsx: true } },
         errors: [
           {
@@ -1891,7 +1974,7 @@ describe(
         ]
       },
       {
-        code: 'class X {}; <X>{ext()}</X>',
+        code: 'class X {}; const x = <X>{ext()}</X>',
         parserOptions: { ecmaFeatures: { jsx: true } },
         errors: [
           {
@@ -1909,7 +1992,7 @@ describe(
   testRule({
     valid: [
       {
-        code: 'class X {}; <X>{}</X>',
+        code: 'class X {}; const x = <X>{}</X>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       }
     ]
@@ -1921,13 +2004,13 @@ describe(
   testRule({
     valid: [
       {
-        code: 'class X {}; <X>{3}</X>',
+        code: 'class X {}; const x = <X>{3}</X>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       }
     ],
     invalid: [
       {
-        code: 'class X {}; <X>{ext()}</X>',
+        code: 'class X {}; const x = <X>{ext()}</X>',
         parserOptions: { ecmaFeatures: { jsx: true } },
         errors: [
           {
@@ -1945,17 +2028,17 @@ describe(
   testRule({
     valid: [
       {
-        code: 'class X {}; <X/>',
+        code: 'class X {}; const x = <X/>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       },
       {
-        code: 'const X = class {constructor() {this.x = 1}}; <X/>',
+        code: 'const X = class {constructor() {this.x = 1}}; const x = <X/>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       }
     ],
     invalid: [
       {
-        code: 'class X {constructor(){ext()}}; <X/>',
+        code: 'class X {constructor(){ext()}}; const x = <X/>',
         parserOptions: { ecmaFeatures: { jsx: true } },
         errors: [
           {
@@ -1965,7 +2048,7 @@ describe(
         ]
       },
       {
-        code: 'const X = class {constructor(){ext()}}; <X/>',
+        code: 'const X = class {constructor(){ext()}}; const x = <X/>',
         parserOptions: { ecmaFeatures: { jsx: true } },
         errors: [
           {
@@ -1975,7 +2058,7 @@ describe(
         ]
       },
       {
-        code: '<Ext/>',
+        code: 'const x = <Ext/>',
         parserOptions: { ecmaFeatures: { jsx: true } },
         errors: [
           {
@@ -1993,7 +2076,7 @@ describe(
   testRule({
     invalid: [
       {
-        code: 'const X = {Y: ext}; <X.Y />',
+        code: 'const X = {Y: ext}; const x = <X.Y />',
         parserOptions: { ecmaFeatures: { jsx: true } },
         errors: [
           {
@@ -2011,21 +2094,21 @@ describe(
   testRule({
     valid: [
       {
-        code: 'class X {}; <X/>',
+        code: 'class X {}; const x = <X/>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       },
       {
-        code: 'class X {}; <X></X>',
+        code: 'class X {}; const x = <X></X>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       },
       {
-        code: 'class X {}; <X test="3"/>',
+        code: 'class X {}; const x = <X test="3"/>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       }
     ],
     invalid: [
       {
-        code: 'class X {}; <X test={ext()}/>',
+        code: 'class X {}; const x = <X test={ext()}/>',
         parserOptions: { ecmaFeatures: { jsx: true } },
         errors: [
           {
@@ -2043,13 +2126,13 @@ describe(
   testRule({
     valid: [
       {
-        code: 'class X {};<X {...{x: 3}}/>',
+        code: 'class X {}; const x = <X {...{x: 3}}/>',
         parserOptions: { ecmaFeatures: { jsx: true } }
       }
     ],
     invalid: [
       {
-        code: 'class X {};<X {...{x: ext()}}/>',
+        code: 'class X {}; const x = <X {...{x: ext()}}/>',
         parserOptions: { ecmaFeatures: { jsx: true } },
         errors: [
           {
@@ -2083,8 +2166,18 @@ describe(
 describe(
   'Literal',
   testRule({
-    valid: ['3', 'if (false) ext()'],
+    valid: ['const x = 3', 'if (false) ext()'],
     invalid: [
+      {
+        code: '"use strict"',
+        errors: [
+          {
+            message:
+              'Cannot determine side-effects of executing Literal as a statement',
+            type: 'Literal'
+          }
+        ]
+      },
       {
         code: 'if (true) ext()',
         errors: [
@@ -2102,7 +2195,7 @@ describe(
   'LogicalExpression',
   testRule({
     valid: [
-      '3 || 4',
+      'const x = 3 || 4',
       'true || ext()',
       'false && ext()',
       'if (false && false) ext()',
@@ -2324,16 +2417,26 @@ describe(
   'NewExpression',
   testRule({
     valid: [
-      'new (function (){this.x = 1})()', //
+      'const x = new (function (){this.x = 1})()',
       'function x(){this.y = 1}; const z = new x()'
     ],
     invalid: [
       {
-        code: 'new ext()',
+        code: 'const x = new ext()',
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
+          }
+        ]
+      },
+      {
+        code: 'new ext()',
+        errors: [
+          {
+            message:
+              'Cannot determine side-effects of executing NewExpression as a statement',
+            type: 'NewExpression'
           }
         ]
       }
@@ -2427,7 +2530,7 @@ describe(
 describe(
   'SequenceExpression',
   testRule({
-    valid: ['1, 2', 'if (ext, false) ext()'],
+    valid: ['let x = 1; x++, x++', 'if (ext, false) ext()'],
     invalid: [
       {
         code: 'ext(), 1',
@@ -2473,11 +2576,13 @@ describe('Super', () => {
   describe(
     'when called',
     testRule({
-      valid: ['class y{}; class x extends y{constructor(){super()}}; new x()'],
+      valid: [
+        'class y{}; class x extends y{constructor(){super()}}; const z = new x()'
+      ],
       invalid: [
         {
           code:
-            'class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; new x()',
+            'class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; const z = new x()',
           errors: [
             {
               message:
@@ -2487,7 +2592,7 @@ describe('Super', () => {
           ]
         },
         {
-          code: 'class x {constructor(){super()}}; new x()',
+          code: 'class x {constructor(){super()}}; const z = new x()',
           errors: [
             {
               message:
@@ -2498,7 +2603,7 @@ describe('Super', () => {
         },
         {
           code:
-            'class y{}; class x extends y{constructor(){super(); super.test()}}; new x()',
+            'class y{}; class x extends y{constructor(){super(); super.test()}}; const z = new x()',
           errors: [
             {
               message:
@@ -2544,8 +2649,8 @@ describe(
   testRule({
     valid: [
       'switch(ext){}',
-      'const x=()=>{}; switch(ext){case 1:const x=ext}; x()',
-      'const x=ext; switch(ext){case 1:const x=()=>{}; x()}'
+      'const x = ()=>{}; switch(ext){case 1:const x = ext}; x()',
+      'const x = ext; switch(ext){case 1:const x = ()=>{}; x()}'
     ],
     invalid: [
       {
@@ -2573,10 +2678,10 @@ describe(
 describe(
   'TaggedTemplateExpression',
   testRule({
-    valid: ['const x = ()=>{}; x``'],
+    valid: ['const x = ()=>{}; const y = x``'],
     invalid: [
       {
-        code: 'ext``',
+        code: 'const x = ext``',
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
@@ -2585,8 +2690,18 @@ describe(
         ]
       },
       {
+        code: 'ext``',
+        errors: [
+          {
+            message:
+              'Cannot determine side-effects of executing TaggedTemplateExpression as a statement',
+            type: 'TaggedTemplateExpression'
+          }
+        ]
+      },
+      {
         // eslint-disable-next-line no-template-curly-in-string
-        code: 'const x = ()=>{}; x`${ext()}`',
+        code: 'const x = ()=>{}; const y = x`${ext()}`',
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
@@ -2602,17 +2717,17 @@ describe(
   'TemplateLiteral',
   testRule({
     valid: [
-      '``',
-      '`Literal`',
+      'const x = ``',
+      'const x = `Literal`',
       // eslint-disable-next-line no-template-curly-in-string
-      '`Literal ${ext}`',
+      'const x = `Literal ${ext}`',
       // eslint-disable-next-line no-template-curly-in-string
-      'const x = ()=>"a"; `Literal ${x()}`'
+      'const x = ()=>"a"; const y = `Literal ${x()}`'
     ],
     invalid: [
       {
         // eslint-disable-next-line no-template-curly-in-string
-        code: '`Literal ${ext()}`',
+        code: 'const x = `Literal ${ext()}`',
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
@@ -2626,17 +2741,17 @@ describe(
 
 describe('ThisExpression', () => {
   testRule({
-    valid: ['this.x']
+    valid: ['const y = this.x']
   })()
 
   describe(
     'when mutated',
     testRule({
       valid: [
-        'new (function (){this.x = 1})()',
-        'new (function (){{this.x = 1}})()',
-        'new (function (){(()=>{this.x = 1})()})()',
-        'function x(){this.y = 1}; new x()'
+        'const y = new (function (){this.x = 1})()',
+        'const y = new (function (){{this.x = 1}})()',
+        'const y = new (function (){(()=>{this.x = 1})()})()',
+        'function x(){this.y = 1}; const y = new x()'
       ],
       invalid: [
         {
@@ -2670,7 +2785,7 @@ describe('ThisExpression', () => {
           ]
         },
         {
-          code: 'new (function (){(function(){this.x = 1}())})()',
+          code: 'const y = new (function (){(function(){this.x = 1}())})()',
           errors: [
             {
               message:
@@ -2793,7 +2908,7 @@ describe(
 describe(
   'UpdateExpression',
   testRule({
-    valid: ['let x=1;x++', 'const x={};x.y++'],
+    valid: ['let x=1;x++', 'const x = {};x.y++'],
     invalid: [
       {
         code: 'ext++',
@@ -2806,7 +2921,7 @@ describe(
         ]
       },
       {
-        code: 'const x={};x[ext()]++',
+        code: 'const x = {};x[ext()]++',
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
