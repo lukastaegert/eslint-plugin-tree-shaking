@@ -31,7 +31,7 @@
     ]
   },
   "devDependencies": {
-    "babel-eslint": "^7.2.3",
+    "babel-eslint": "^8.0.0",
     "eslint": "^4.4.1",
     "husky": "^0.14.3",
     "lint-staged": "^4.0.3",
