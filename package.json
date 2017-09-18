@@ -40,7 +40,7 @@
     "mocha": "^3.5.3",
     "prettier-standard": "^6.0.0",
     "rollup": "^0.50.0",
-    "semantic-release": "^8.0.0",
+    "semantic-release": "^7.0.2",
     "standard": "^10.0.3"
   },
   "engines": {
@@ -50,5 +50,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/lukastaegert/eslint-plugin-tree-shaking.git"
-  }
+  },
+  "version": "0.0.0-development"
 }
