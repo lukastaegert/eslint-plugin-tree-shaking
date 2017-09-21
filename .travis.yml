@@ -7,8 +7,6 @@ notifications:
 node_js:
   - 'node'
   - '6'
-before_script:
-  - npm prune
 after_success:
   - npm run semantic-release
 branches:

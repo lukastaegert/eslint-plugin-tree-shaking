@@ -38,6 +38,7 @@
     "husky": "^0.14.3",
     "lint-staged": "^4.2.1",
     "mocha": "^3.5.3",
+    "node-uuid": "^1.4.8",
     "prettier-standard": "^6.0.0",
     "rollup": "^0.50.0",
     "semantic-release": "^8.0.1",
