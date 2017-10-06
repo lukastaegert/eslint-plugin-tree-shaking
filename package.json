@@ -31,12 +31,12 @@
     ]
   },
   "devDependencies": {
-    "@commitlint/cli": "^3.2.0",
+    "@commitlint/cli": "^4.1.0",
     "@commitlint/config-angular": "^3.1.1",
-    "babel-eslint": "^8.0.0",
-    "eslint": "^4.7.0",
+    "babel-eslint": "^8.0.1",
+    "eslint": "^4.8.0",
     "husky": "^0.14.3",
-    "lint-staged": "^4.2.1",
+    "lint-staged": "^4.2.3",
     "mocha": "^4.0.0",
     "prettier-standard": "^7.0.1",
     "rollup": "^0.50.0",
