@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^4.1.0",
-    "@commitlint/config-angular": "^3.1.1",
+    "@commitlint/config-angular": "^4.2.0",
     "babel-eslint": "^8.0.1",
     "eslint": "^4.8.0",
     "husky": "^0.14.3",
