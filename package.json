@@ -21,7 +21,7 @@
     "prepush": "npm test",
     "postmerge": "npm install && npm prune",
     "postrewrite": "npm install && npm prune",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
+    "semantic-release": "semantic-release"
   },
   "lint-staged": {
     "*.js": [
