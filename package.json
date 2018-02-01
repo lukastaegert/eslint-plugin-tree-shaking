@@ -21,7 +21,7 @@
     "prepush": "npm test",
     "postmerge": "npm install && npm prune",
     "postrewrite": "npm install && npm prune",
-    "semantic-release": "semantic-release"
+    "semantic-release": "check-node-version '>=8' && semantic-release || true"
   },
   "lint-staged": {
     "*.js": [
@@ -34,6 +34,7 @@
     "@commitlint/cli": "^6.0.2",
     "@commitlint/config-angular": "^6.0.4",
     "babel-eslint": "^8.0.1",
+    "check-node-version": "^3.2.0",
     "eslint": "^4.8.0",
     "husky": "^0.14.3",
     "lint-staged": "^6.0.0",
