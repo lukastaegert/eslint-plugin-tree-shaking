@@ -42,7 +42,7 @@
     "prettier-standard": "^7.0.1",
     "rollup": "^0.50.0",
     "semantic-release": "^12.2.2",
-    "standard": "^10.0.3"
+    "standard": "^11.0.0"
   },
   "engines": {
     "node": ">=6.0.0"
