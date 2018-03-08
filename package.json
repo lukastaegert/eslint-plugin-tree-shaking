@@ -41,7 +41,7 @@
     "mocha": "^5.0.0",
     "prettier-standard": "^7.0.1",
     "rollup": "^0.50.0",
-    "semantic-release": "^12.2.2",
+    "semantic-release": "^15.0.0",
     "standard": "^11.0.0"
   },
   "engines": {
