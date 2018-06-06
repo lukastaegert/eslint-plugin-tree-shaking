@@ -21,7 +21,8 @@
     "prepush": "npm test",
     "postmerge": "npm install && npm prune",
     "postrewrite": "npm install && npm prune",
-    "semantic-release": "check-node-version '>=8' && semantic-release || true"
+    "semantic-release": "semantic-release",
+    "travis-deploy-once": "travis-deploy-once"
   },
   "lint-staged": {
     "*.js": [
@@ -42,7 +43,8 @@
     "prettier-standard": "^8.0.1",
     "rollup": "^0.50.0",
     "semantic-release": "^15.0.0",
-    "standard": "^11.0.0"
+    "standard": "^11.0.0",
+    "travis-deploy-once": "^5.0.0"
   },
   "engines": {
     "node": ">=6.0.0"

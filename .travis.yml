@@ -1,13 +1,15 @@
 language: node_js
-script:
-  - npm run test
+cache:
+  directories:
+    - ~/.npm
 notifications:
   email: true
 node_js:
   - 'node'
   - '6'
-deploy:
-  provider: script
-  skip_cleanup: true
-  script:
-    - npm run semantic-release
+before_install:
+  - npm i -g npm@5
+script:
+  - npm run test
+after_success:
+  - npm run travis-deploy-once "npm run semantic-release"
