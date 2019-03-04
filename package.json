@@ -41,7 +41,7 @@
     "lint-staged": "^7.0.0",
     "mocha": "^5.2.0",
     "prettier-standard": "^8.0.1",
-    "rollup": "^0.50.0",
+    "rollup": "^1.4.1",
     "semantic-release": "^15.0.0",
     "standard": "^11.0.0",
     "travis-deploy-once": "^5.0.0"
