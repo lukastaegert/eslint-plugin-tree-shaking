@@ -782,6 +782,10 @@ describe(
   testRule({
     valid: [
       {
+        code: 'class x {y}',
+        parser: 'babel-eslint'
+      },
+      {
         code: 'class x {y = 1}',
         parser: 'babel-eslint'
       }
