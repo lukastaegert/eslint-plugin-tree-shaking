@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "pre-commit": "lint-staged",
+    "commit-msg": "commitlint -e",
+    "post-commit": "git reset",
+    "pre-push": "npm test",
+    "post-merge": "npm ci",
+    "post-rewrite": "npm ci"
+  }
+}
