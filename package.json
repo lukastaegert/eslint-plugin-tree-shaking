@@ -15,8 +15,7 @@
   "scripts": {
     "test": "mocha tests/lib/rules/no-side-effects-in-initialization.js",
     "lint": "prettier-standard *.js lib/**/*.js tests/**/*.js",
-    "semantic-release": "semantic-release",
-    "travis-deploy-once": "travis-deploy-once"
+    "semantic-release": "semantic-release"
   },
   "devDependencies": {
     "@commitlint/cli": "^7.5.2",
@@ -30,8 +29,7 @@
     "prettier-standard": "^9.1.1",
     "rollup": "^0.50.0",
     "semantic-release": "^15.13.8",
-    "standard": "^12.0.1",
-    "travis-deploy-once": "^5.0.11"
+    "standard": "^12.0.1"
   },
   "engines": {
     "node": ">=6.0.0"

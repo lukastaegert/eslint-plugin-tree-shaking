@@ -1,15 +1,20 @@
 language: node_js
-cache:
-  directories:
-    - ~/.npm
-notifications:
-  email: true
 node_js:
   - 'node'
   - '6'
+
+branches:
+  except:
+    - /^v\d+\.\d+\.\d+$/
+
 before_install:
-  - npm i -g npm@5
-script:
-  - npm run test
-after_success:
-  - npm run travis-deploy-once "npm run semantic-release"
+  - NPM_VERSION=$(npm -v);if [[ ${NPM_VERSION:0:1} -lt 5 ]]; then npm install --global npm@5; fi
+
+jobs:
+  include:
+    - stage: release
+      node_js: node
+      deploy:
+        provider: script
+        skip_cleanup: true
+        script: npx semantic-release
