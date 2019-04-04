@@ -1,0 +1,7 @@
+{
+  "*.js": [
+    "prettier-standard",
+    "standard --fix",
+    "git add"
+  ]
+}
