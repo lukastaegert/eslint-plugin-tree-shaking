@@ -27,7 +27,7 @@
     "lint-staged": "^8.1.5",
     "mocha": "^6.0.2",
     "prettier-standard": "^9.1.1",
-    "rollup": "^0.50.0",
+    "rollup": "^1.19.2",
     "semantic-release": "^15.13.8",
     "standard": "^12.0.1"
   },
