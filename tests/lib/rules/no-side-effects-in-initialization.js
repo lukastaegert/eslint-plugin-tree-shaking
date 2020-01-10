@@ -16,6 +16,9 @@ const PARSER_OPTIONS = {
   sourceType: 'module'
 }
 
+const PARSER_BABEL = require.resolve('babel-eslint')
+const PARSER_TYPESCRIPT = require.resolve('@typescript-eslint/parser')
+
 RuleTester.setDefaultConfig({
   parserOptions: PARSER_OPTIONS
 })
@@ -747,17 +750,17 @@ describe(
     valid: [
       {
         code: 'class x {y}',
-        parser: 'babel-eslint'
+        parser: PARSER_BABEL
       },
       {
         code: 'class x {y = 1}',
-        parser: 'babel-eslint'
+        parser: PARSER_BABEL
       }
     ],
     invalid: [
       {
         code: 'class x {[ext()] = 1}',
-        parser: 'babel-eslint',
+        parser: PARSER_BABEL,
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
@@ -767,7 +770,7 @@ describe(
       },
       {
         code: 'class x {y = ext()}',
-        parser: 'babel-eslint',
+        parser: PARSER_BABEL,
         errors: [
           {
             message: 'Cannot determine side-effects of calling global function',
@@ -2951,4 +2954,16 @@ describe('YieldExpression', () => {
       ]
     })
   )
+})
+
+describe('Supports TypeScript nodes', () => {
+  ruleTester.run(RULE_NAME, rule, {
+    valid: [
+      {
+        code: 'interface Blub {}',
+        parser: PARSER_TYPESCRIPT
+      }
+    ],
+    invalid: []
+  })
 })
