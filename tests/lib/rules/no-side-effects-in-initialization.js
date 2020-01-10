@@ -1,34 +1,14 @@
 /* eslint-env mocha */
 
-/* Bugs in rollup:
- * * Reassigning var with var is handled differently from reassigning without var
- * * Side-effects in default parameter values are ignored
- * * Side-effects in computed properties in class bodies are ignored
- * * Assigning to a global variable by a ForInStatement/ForOfStatement is ignored
- * * Manually constructing an iterable will not trigger side-effects in the iterator function
- * * Calling an imported arrow function always seems to have side-effects
- */
-
 /* Possible improvements for rollup:
- * * Consider impure functions as unknown assignments to their arguments
  * * Properly handle valid this values
- * * If a LogicalExpression does not need both arguments to determine its value, do not consider
- *   side-effects in the other argument
- * * SequenceExpressions return their last value
- * * Properly clean up top-level BlockStatements
- * * Instantiating ES6 classes does not need to be a side-effect
- * * LabeledStatements do not necessarily have side-effects
+ * * Deleting an object expression member whose value is a global does not need to be a side-effect
  */
 
 const rule = require('../../../lib/rules/no-side-effects-in-initialization')
 const { Linter, RuleTester } = require('eslint')
-const fs = require('fs')
-const path = require('path')
 const rollup = require('rollup')
 
-const BUNDLER_TEST_PATH = path.join(__dirname, '../../../test-resources')
-const BUNDLER_TEST_FILE = path.join(BUNDLER_TEST_PATH, 'test.js')
-const BUNDLER_IMPORT_FILE = path.join(BUNDLER_TEST_PATH, 'main.js')
 const RULE_NAME = 'no-side-effects-in-initialization'
 
 const PARSER_OPTIONS = {
@@ -44,18 +24,42 @@ const ruleTester = new RuleTester()
 const linter = new Linter()
 linter.defineRule(RULE_NAME, rule)
 
-const createRollupOutput = code => {
-  fs.writeFileSync(BUNDLER_TEST_FILE, code)
-  return rollup
-    .rollup({ input: BUNDLER_IMPORT_FILE })
+const createRollupOutput = code =>
+  rollup
+    .rollup({
+      input: 'main',
+      treeshake: { unknownGlobalSideEffects: false, propertyReadSideEffects: false },
+      plugins: {
+        resolveId (id) {
+          return id
+        },
+        load (id) {
+          switch (id) {
+            case 'main':
+              return "import 'test'"
+            case 'test':
+              return code
+            case 'import':
+              return 'export const x=ext'
+            case 'import-default':
+              return 'export default ext'
+            case 'import-default-no-effects':
+              return 'export default function(){}'
+            case 'import-no-effects':
+              return 'export const x=function(){}'
+            default:
+              throw new Error(`Unexpected import of "${id}"`)
+          }
+        }
+      }
+    })
     .then(bundle => bundle.generate({ format: 'es' }))
-    .then(result => result.code.trim())
-}
+    .then(result => result.output[0].code.trim())
 
 const getEsLintErrors = code =>
   linter.verify(code, {
     parserOptions: PARSER_OPTIONS,
-    rules: { [RULE_NAME]: [1, { compatibility: 'rollup' }] }
+    rules: { [RULE_NAME]: 1 }
   })
 
 const getErrorFreeCodeKeptMessage = (
@@ -100,7 +104,7 @@ const testRule = ({ valid = [], invalid = [] }) => () => {
 describe(
   'ArrayExpression',
   testRule({
-    valid: ['const x = []', 'const x = [ext,ext]', 'const x = [1,,2,]'],
+    valid: ['[]', 'const x = []', 'const x = [ext,ext]', 'const x = [1,,2,]'],
     invalid: [
       {
         code: 'const x = [ext()]',
@@ -117,15 +121,6 @@ describe(
           {
             message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
-          }
-        ]
-      },
-      {
-        code: '[ext.x]',
-        errors: [
-          {
-            message: 'Cannot determine side-effects of executing ArrayExpression as a statement',
-            type: 'ArrayExpression'
           }
         ]
       }
@@ -559,16 +554,15 @@ describe('ClassBody', () => {
       valid: [
         'class x {a(){ext()}}; const y = new x()',
         'class x {constructor(){}}; const y = new x()',
-        'class y{}; class x extends y{}; const z = new x()',
-        'class y{}; class x extends y{constructor(){super()}}; const z = new x()'
+        'class y{}; class x extends y{}; const z = new x()'
       ],
       invalid: [
         {
           code: 'class x {constructor(){ext()}}; new x()',
           errors: [
             {
-              message: 'Cannot determine side-effects of executing NewExpression as a statement',
-              type: 'NewExpression'
+              message: 'Cannot determine side-effects of calling global function',
+              type: 'Identifier'
             }
           ]
         },
@@ -604,8 +598,17 @@ describe('ClassBody', () => {
             'class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; const z = new x()',
           errors: [
             {
-              message: 'Cannot determine side-effects of calling global function',
-              type: 'Identifier'
+              message: 'Cannot determine side-effects of calling super',
+              type: 'Super'
+            }
+          ]
+        },
+        {
+          code: 'class y{}; class x extends y{constructor(){super()}}; const z = new x()',
+          errors: [
+            {
+              message: 'Cannot determine side-effects of calling super',
+              type: 'Super'
             }
           ]
         }
@@ -648,8 +651,8 @@ describe('ClassDeclaration', () => {
           code: 'class x {constructor(){ext()}}; new x()',
           errors: [
             {
-              message: 'Cannot determine side-effects of executing NewExpression as a statement',
-              type: 'NewExpression'
+              message: 'Cannot determine side-effects of calling global function',
+              type: 'Identifier'
             }
           ]
         },
@@ -710,8 +713,8 @@ describe('ClassExpression', () => {
           code: 'new (class {constructor(){ext()}})()',
           errors: [
             {
-              message: 'Cannot determine side-effects of executing NewExpression as a statement',
-              type: 'NewExpression'
+              message: 'Cannot determine side-effects of calling global function',
+              type: 'Identifier'
             }
           ]
         },
@@ -782,29 +785,11 @@ describe('ConditionalExpression', () => {
       'const x = ext ? 1 : 2',
       'const x = true ? 1 : ext()',
       'const x = false ? ext() : 2',
-      'if (true ? false : true) ext()'
+      'if (true ? false : true) ext()',
+      'ext ? 1 : ext.x',
+      'ext ? ext.x : 1'
     ],
     invalid: [
-      {
-        code: 'ext ? 1 : ext.x',
-        errors: [
-          {
-            message:
-              'Cannot determine side-effects of executing ConditionalExpression as a statement',
-            type: 'ConditionalExpression'
-          }
-        ]
-      },
-      {
-        code: 'ext ? ext.x : 1',
-        errors: [
-          {
-            message:
-              'Cannot determine side-effects of executing ConditionalExpression as a statement',
-            type: 'ConditionalExpression'
-          }
-        ]
-      },
       {
         code: 'const x = ext() ? 1 : 2',
         errors: [
@@ -955,7 +940,7 @@ describe(
 describe(
   'ExportAllDeclaration',
   testRule({
-    valid: ['export * from "./import"']
+    valid: ['export * from "import"']
   })
 )
 
@@ -1009,9 +994,9 @@ describe(
       'export const x = ext',
       'export function x(){ext()}',
       'const x = ext; export {x}',
-      'export {x} from "./import"',
-      'export {x as y} from "./import"',
-      'export {x as default} from "./import"',
+      'export {x} from "import"',
+      'export {x as y} from "import"',
+      'export {x as default} from "import"',
       'export const /* tree-shaking no-side-effects-when-called */ x = function(){}',
       'export function /* tree-shaking no-side-effects-when-called */ x(){}',
       'const x = function(){}; export {/* tree-shaking no-side-effects-when-called */ x}'
@@ -1123,14 +1108,28 @@ describe(
 describe(
   'ForOfStatement',
   testRule({
-    valid: ['for(const x of ext){}', 'let x; for(x of ext){}'],
     invalid: [
+      {
+        code:
+          'const iterable={[Symbol.iterator]:()=>({next(){ext();return{done: true}}})};' +
+          'for (const x of iterable) {}',
+        errors: [
+          {
+            message: 'Cannot determine side-effects of iterating over an iterable',
+            type: 'Identifier'
+          }
+        ]
+      },
       {
         code: 'for(ext of {a: 1}){}',
         errors: [
           {
             message: 'Cannot determine side-effects of assignment to global variable',
             type: 'Identifier'
+          },
+          {
+            message: 'Cannot determine side-effects of iterating over an iterable',
+            type: 'ObjectExpression'
           }
         ]
       },
@@ -1140,12 +1139,20 @@ describe(
           {
             message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
+          },
+          {
+            message: 'Cannot determine side-effects of iterating over an iterable',
+            type: 'CallExpression'
           }
         ]
       },
       {
         code: 'for(const x of {a: 1}){ext()}',
         errors: [
+          {
+            message: 'Cannot determine side-effects of iterating over an iterable',
+            type: 'ObjectExpression'
+          },
           {
             message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
@@ -1155,6 +1162,10 @@ describe(
       {
         code: 'for(const x of {a: 1}) ext()',
         errors: [
+          {
+            message: 'Cannot determine side-effects of iterating over an iterable',
+            type: 'ObjectExpression'
+          },
           {
             message: 'Cannot determine side-effects of calling global function',
             type: 'Identifier'
@@ -1256,8 +1267,8 @@ describe('FunctionDeclaration', () => {
           code: 'function x(){ext()}; new x()',
           errors: [
             {
-              message: 'Cannot determine side-effects of executing NewExpression as a statement',
-              type: 'NewExpression'
+              message: 'Cannot determine side-effects of calling global function',
+              type: 'Identifier'
             }
           ]
         },
@@ -1409,8 +1420,8 @@ describe('FunctionExpression', () => {
           code: 'new (function (){ext()})()',
           errors: [
             {
-              message: 'Cannot determine side-effects of executing NewExpression as a statement',
-              type: 'NewExpression'
+              message: 'Cannot determine side-effects of calling global function',
+              type: 'Identifier'
             }
           ]
         },
@@ -1500,10 +1511,9 @@ describe('Identifier', () => {
     'when called',
     testRule({
       valid: [
-        'const x = ()=>{}; x(ext)',
-        'function x(){}; x(ext)',
-        'let x = ()=>{};x = ()=>{}; x(ext)',
-        'var x = ()=>{};var x = ()=>{}; x(ext)',
+        'const x = ()=>{};x(ext)',
+        'function x(){};x(ext)',
+        'var x = ()=>{};x(ext)',
         'const x = ()=>{}, y = ()=>{x()}; y()',
         'const x = ext, y = ()=>{const x = ()=>{}; x()}; y()'
       ],
@@ -1714,20 +1724,20 @@ describe(
   'ImportDeclaration',
   testRule({
     valid: [
-      'import "./import"',
-      'import x from "./import-default"',
-      'import {x} from "./import"',
-      'import {x as y} from "./import"',
-      'import * as x from "./import"',
-      'import /* tree-shaking no-side-effects-when-called */ x from "./import-default-no-effects"; x()',
-      'import /* test */ /*tree-shaking  no-side-effects-when-called */ x from "./import-default-no-effects"; x()',
-      'import /* tree-shaking  no-side-effects-when-called*/ /* test */ x from "./import-default-no-effects"; x()',
-      'import {/* tree-shaking  no-side-effects-when-called */ x} from "./import-no-effects"; x()',
-      'import {x as /* tree-shaking  no-side-effects-when-called */ y} from "./import-no-effects"; y()'
+      'import "import"',
+      'import x from "import-default"',
+      'import {x} from "import"',
+      'import {x as y} from "import"',
+      'import * as x from "import"',
+      'import /* tree-shaking no-side-effects-when-called */ x from "import-default-no-effects"; x()',
+      'import /* test */ /*tree-shaking  no-side-effects-when-called */ x from "import-default-no-effects"; x()',
+      'import /* tree-shaking  no-side-effects-when-called*/ /* test */ x from "import-default-no-effects"; x()',
+      'import {/* tree-shaking  no-side-effects-when-called */ x} from "import-no-effects"; x()',
+      'import {x as /* tree-shaking  no-side-effects-when-called */ y} from "import-no-effects"; y()'
     ],
     invalid: [
       {
-        code: 'import x from "./import-default"; x()',
+        code: 'import x from "import-default"; x()',
         errors: [
           {
             message: 'Cannot determine side-effects of calling imported function',
@@ -1736,7 +1746,7 @@ describe(
         ]
       },
       {
-        code: 'import x from "./import-default"; x.z = 1',
+        code: 'import x from "import-default"; x.z = 1',
         errors: [
           {
             message: 'Cannot determine side-effects of mutating imported variable',
@@ -1745,7 +1755,7 @@ describe(
         ]
       },
       {
-        code: 'import {x} from "./import"; x()',
+        code: 'import {x} from "import"; x()',
         errors: [
           {
             message: 'Cannot determine side-effects of calling imported function',
@@ -1754,7 +1764,7 @@ describe(
         ]
       },
       {
-        code: 'import {x} from "./import"; x.z = 1',
+        code: 'import {x} from "import"; x.z = 1',
         errors: [
           {
             message: 'Cannot determine side-effects of mutating imported variable',
@@ -1763,7 +1773,7 @@ describe(
         ]
       },
       {
-        code: 'import {x as y} from "./import"; y()',
+        code: 'import {x as y} from "import"; y()',
         errors: [
           {
             message: 'Cannot determine side-effects of calling imported function',
@@ -1772,7 +1782,7 @@ describe(
         ]
       },
       {
-        code: 'import {x as y} from "./import"; y.a = 1',
+        code: 'import {x as y} from "import"; y.a = 1',
         errors: [
           {
             message: 'Cannot determine side-effects of mutating imported variable',
@@ -1781,7 +1791,7 @@ describe(
         ]
       },
       {
-        code: 'import * as y from "./import"; y.x()',
+        code: 'import * as y from "import"; y.x()',
         errors: [
           {
             message: 'Cannot determine side-effects of calling member function',
@@ -1790,7 +1800,7 @@ describe(
         ]
       },
       {
-        code: 'import * as y from "./import"; y.x = 1',
+        code: 'import * as y from "import"; y.x = 1',
         errors: [
           {
             message: 'Cannot determine side-effects of mutating imported variable',
@@ -2061,17 +2071,8 @@ describe(
 describe(
   'Literal',
   testRule({
-    valid: ['const x = 3', 'if (false) ext()'],
+    valid: ['const x = 3', 'if (false) ext()', '"use strict"'],
     invalid: [
-      {
-        code: '"use strict"',
-        errors: [
-          {
-            message: 'Cannot determine side-effects of executing Literal as a statement',
-            type: 'Literal'
-          }
-        ]
-      },
       {
         code: 'if (true) ext()',
         errors: [
@@ -2242,7 +2243,7 @@ describe('MemberExpression', () => {
   describe(
     'when mutated',
     testRule({
-      valid: ['const x = {};x.y = ext', 'const x = {y: ext};delete x.y'],
+      valid: ['const x = {};x.y = ext', 'const x = {y: 1};delete x.y'],
       invalid: [
         {
           code: 'const x = {y: ext};x.y.z = 1',
@@ -2322,8 +2323,8 @@ describe(
         code: 'new ext()',
         errors: [
           {
-            message: 'Cannot determine side-effects of executing NewExpression as a statement',
-            type: 'NewExpression'
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
           }
         ]
       }
@@ -2459,15 +2460,14 @@ describe('Super', () => {
   describe(
     'when called',
     testRule({
-      valid: ['class y{}; class x extends y{constructor(){super()}}; const z = new x()'],
       invalid: [
         {
           code:
             'class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; const z = new x()',
           errors: [
             {
-              message: 'Cannot determine side-effects of calling global function',
-              type: 'Identifier'
+              message: 'Cannot determine side-effects of calling super',
+              type: 'Super'
             }
           ]
         },
@@ -2476,8 +2476,21 @@ describe('Super', () => {
             'class y{}; class x extends y{constructor(){super(); super.test()}}; const z = new x()',
           errors: [
             {
+              message: 'Cannot determine side-effects of calling super',
+              type: 'Super'
+            },
+            {
               message: 'Cannot determine side-effects of calling member function',
               type: 'Identifier'
+            }
+          ]
+        },
+        {
+          code: 'class y{}; class x extends y{constructor(){super()}}; const z = new x()',
+          errors: [
+            {
+              message: 'Cannot determine side-effects of calling super',
+              type: 'Super'
             }
           ]
         }
@@ -2562,9 +2575,8 @@ describe(
         code: 'ext``',
         errors: [
           {
-            message:
-              'Cannot determine side-effects of executing TaggedTemplateExpression as a statement',
-            type: 'TaggedTemplateExpression'
+            message: 'Cannot determine side-effects of calling global function',
+            type: 'Identifier'
           }
         ]
       },

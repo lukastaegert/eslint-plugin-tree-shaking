@@ -1,7 +1,6 @@
 # How to contribute
 
 ### You have code that is not tree-shaken by rollup even though there are no ESLint issues
-* Make sure you are using [rollup-compatibility mode](./README.md#rollup-compatibility-mode)
 * Make sure you are using the latest versions of both rollup and this plugin
 * Check if there is already an issue about this
 * If not, **file an issue!** The title should be prefixed with "\[rollup\] …" to make it easier to
@@ -22,8 +21,6 @@
 * Add minimal code that exposes your issue
 
 ### Webpack compatibility mode
-* This would certainly be useful; however, there are other issues I want to address first, mainly,
-  seeing how rollup's code could be improved.
 * If you want to help here, this is what needs to be done:
   * Add code that can automatically run a code snippet in Webpack with the UglifyJS plugin to enable
     tree-shaking and check the result is removed properly

@@ -74,31 +74,6 @@ Then add the rule `no-side-effects-in-initialization` to the rules section:
 }
 ```
 
-### Rollup compatibility mode
-
-If you are using [rollup.js](https://rollupjs.org/), you should activate the rollup compatibility
-mode that will flag additional issues that prevent tree-shaking in rollup:
-```json
-{
-    "rules": {
-        "tree-shaking/no-side-effects-in-initialization": [
-            2, {"compatibility": "rollup"}
-        ]
-    }
-}
-```
-
-E.g. **JavaScript:**
-```javascript
-class x {}
-new x()
-```
-
-**ESLint output:**
-```
-1:1   error  [Rollup specific] Calling a ClassDeclaration is a side-effect
-```
-
 ## Magic Comments
 
 ESLint only ever analyzes one file at a time and by default, this plugin assumes that all imported
@@ -152,22 +127,12 @@ pure function. Examples:
 
 ## Background and Planned Development
 
-This plugin is in early development. If you want to contribute, please read
+This plugin is in development. If you want to contribute, please read
 [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 This plugin implements a side-effect detection algorithm similar to what rollup uses to determine
-if code can be removed safely. However, there is no one-to-one correspondence as this is also meant
-as an example implementation of what such an algorithm could do. For instance, this algorithm is
-able to identify if the instantiation of a class has side-effects, something that rollup has not
-implemented yet.
-
-Therefore to make this plugin actually useful to library developers, it sports a rollup
-compatibility mode. If you find that you have code that
+if code can be removed safely. However, there is no one-to-one correspondence. If you find that you have code that
 * is not removed by rollup (even though tree-shaking is enabled) but
-* has no ESLint issues even though you use rollup compatibility mode
+* has no ESLint issues
 
 please--if no-one else has done so yet--[check the guidelines](./CONTRIBUTING.md) and **file an issue!**
-
-Planned improvements:
-* There is no webpack compatibility mode yet. The plan is to add this eventually but if you want
-  to speed things up, please contribute.
