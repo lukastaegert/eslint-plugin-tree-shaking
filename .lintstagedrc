@@ -1,6 +1,5 @@
 {
   "*.js": [
-    "prettier-standard",
-    "standard --fix"
+    "eslint --fix"
   ]
 }

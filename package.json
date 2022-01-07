@@ -14,7 +14,7 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "mocha tests/lib/rules/no-side-effects-in-initialization.js",
-    "lint": "prettier-standard *.js lib/**/*.js tests/**/*.js",
+    "lint": "eslint --fix *.js lib/**/*.js tests/**/*.js",
     "semantic-release": "semantic-release",
     "prepare": "husky install"
   },
@@ -26,17 +26,17 @@
     "@typescript-eslint/parser": "^5.9.0",
     "babel-eslint": "^10.1.0",
     "eslint": "^8.6.0",
-    "eslint-config-standard": "^16.0.3",
+    "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-promise": "^6.0.0",
     "husky": "^7.0.4",
     "lint-staged": "^12.1.6",
     "mocha": "^9.1.3",
-    "prettier-standard": "^16.4.1",
+    "prettier": "^2.5.1",
     "rollup": "^2.63.0",
     "semantic-release": "^18.0.1",
-    "standard": "^16.0.4",
     "typescript": "^4.5.4"
   },
   "engines": {
