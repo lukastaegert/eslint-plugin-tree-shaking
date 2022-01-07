@@ -13,10 +13,11 @@ const RULE_NAME = 'no-side-effects-in-initialization'
 
 const PARSER_OPTIONS = {
   ecmaVersion: 2017,
-  sourceType: 'module'
+  sourceType: 'module',
+  requireConfigFile: false
 }
 
-const PARSER_BABEL = require.resolve('babel-eslint')
+const PARSER_BABEL = require.resolve('@babel/eslint-parser')
 const PARSER_TYPESCRIPT = require.resolve('@typescript-eslint/parser')
 
 RuleTester.setDefaultConfig({
@@ -269,7 +270,6 @@ describe(
       'var x;x += 1',
       'const x = {}; x.y = 1',
       'const x = {}; x["y"] = 1',
-      'const x = {}, y = ()=>{}; x[y()] = 1',
       'function x(){this.y = 1}; const z = new x()',
       'let x = 1; x = 2 + 3',
       'let x; x = 2 + 3'
@@ -359,7 +359,6 @@ describe(
 describe(
   'AwaitExpression',
   testRule({
-    valid: ['const x = () => Promise.resolve(); const y = async ()=>{await x()}; y()'],
     invalid: [
       {
         code: 'const x = async ()=>{await ext()}; x()',
