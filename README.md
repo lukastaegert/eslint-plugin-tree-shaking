@@ -74,6 +74,34 @@ Then add the rule `no-side-effects-in-initialization` to the rules section:
 }
 ```
 
+To prevent false positives, configure like this:
+```json
+{
+    "rules": {
+        "tree-shaking/no-side-effects-in-initialization": [
+            2,
+            {
+                "noSideEffectsWhenCalled": [
+                    { "function": "Object.freeze" },
+                    {
+                        "module": "react",
+                        "functions": ["createContext", "createRef"],
+                    },
+                    {
+                        "module": "zod",
+                        "functions": ["array", "string", "nativeEnum", "number", "object", "optional"],
+                    },
+                    {
+                        "module": "my/local/module",
+                        "functions": ["foo", "bar", "baz"],
+                    },
+                ],
+            },
+        ],
+    }
+}
+```
+
 ## Magic Comments
 
 ESLint only ever analyzes one file at a time and by default, this plugin assumes that all imported
