@@ -744,8 +744,7 @@ describe("ClassExpression", () => {
   );
 });
 
-describe(
-  "ClassProperty",
+describe("ClassProperty", () => {
   testRule({
     valid: [
       {
@@ -754,6 +753,10 @@ describe(
       },
       {
         code: "class x {y = 1}",
+        parser: PARSER_BABEL,
+      },
+      {
+        code: "class x {y = ext()}",
         parser: PARSER_BABEL,
       },
     ],
@@ -768,19 +771,28 @@ describe(
           },
         ],
       },
-      {
-        code: "class x {y = ext()}",
-        parser: PARSER_BABEL,
-        errors: [
-          {
-            message: "Cannot determine side-effects of calling global function",
-            type: "Identifier",
-          },
-        ],
-      },
     ],
-  })
-);
+  })();
+
+  describe(
+    "when called",
+    testRule({
+      valid: [],
+      invalid: [
+        {
+          code: "class x {y = ext()}; new x()",
+          parser: PARSER_BABEL,
+          errors: [
+            {
+              message: "Cannot determine side-effects of calling global function",
+              type: "Identifier",
+            },
+          ],
+        },
+      ],
+    })
+  );
+});
 
 describe("ConditionalExpression", () => {
   testRule({
