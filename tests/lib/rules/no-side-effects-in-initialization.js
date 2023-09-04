@@ -68,13 +68,13 @@ const getEsLintErrors = (code) =>
 
 const getErrorFreeCodeKeptMessage = (
   code,
-  rollupOutput
+  rollupOutput,
 ) => `${code} was not removed by rollup even though it contained no errors. Rollup output:
 ${rollupOutput}\n`;
 
 const getErroneousCodeRemovedMessage = (
   code,
-  esLintErrors
+  esLintErrors,
 ) => `${code} was removed by rollup even though it contained errors:
 ${esLintErrors.map((error) => `- ${error.message}`).join("\n")}\n`;
 
@@ -131,7 +131,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -158,7 +158,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe("ArrowFunctionExpression", () => {
@@ -253,14 +253,14 @@ describe("ArrowFunctionExpression", () => {
           ],
         },
       ],
-    })
+    }),
   );
 
   describe(
     "when mutated",
     testRule({
       valid: ["const x = ()=>{}; x.y = 1"],
-    })
+    }),
   );
 });
 
@@ -323,7 +323,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -355,7 +355,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -372,7 +372,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -399,7 +399,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -435,14 +435,14 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
   "BreakStatement",
   testRule({
     valid: ["while(true){break}"],
-  })
+  }),
 );
 
 describe("CallExpression", () => {
@@ -484,7 +484,7 @@ describe("CallExpression", () => {
           ],
         },
       ],
-    })
+    }),
   );
 
   describe(
@@ -501,7 +501,7 @@ describe("CallExpression", () => {
           ],
         },
       ],
-    })
+    }),
   );
 });
 
@@ -533,7 +533,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe("ClassBody", () => {
@@ -616,7 +616,7 @@ describe("ClassBody", () => {
           ],
         },
       ],
-    })
+    }),
   );
 });
 
@@ -678,7 +678,7 @@ describe("ClassDeclaration", () => {
           ],
         },
       ],
-    })
+    }),
   );
 });
 
@@ -740,7 +740,7 @@ describe("ClassExpression", () => {
           ],
         },
       ],
-    })
+    }),
   );
 });
 
@@ -790,7 +790,7 @@ describe("ClassProperty", () => {
           ],
         },
       ],
-    })
+    }),
   );
 });
 
@@ -881,7 +881,7 @@ describe("ConditionalExpression", () => {
           ],
         },
       ],
-    })
+    }),
   );
 });
 
@@ -889,7 +889,7 @@ describe(
   "ContinueStatement",
   testRule({
     valid: ["while(true){continue}"],
-  })
+  }),
 );
 
 describe(
@@ -906,7 +906,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -942,21 +942,21 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
   "EmptyStatement",
   testRule({
     valid: [";"],
-  })
+  }),
 );
 
 describe(
   "ExportAllDeclaration",
   testRule({
     valid: ['export * from "import"'],
-  })
+  }),
 );
 
 describe(
@@ -999,7 +999,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -1054,7 +1054,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -1072,7 +1072,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -1117,7 +1117,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -1188,7 +1188,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -1242,7 +1242,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe("FunctionDeclaration", () => {
@@ -1387,14 +1387,14 @@ describe("FunctionDeclaration", () => {
           ],
         },
       ],
-    })
+    }),
   );
 
   describe(
     "when mutated",
     testRule({
       valid: ["function x(){}; x.y = 1"],
-    })
+    }),
   );
 });
 
@@ -1513,7 +1513,7 @@ describe("FunctionExpression", () => {
           ],
         },
       ],
-    })
+    }),
   );
 });
 
@@ -1624,7 +1624,7 @@ describe("Identifier", () => {
           ],
         },
       ],
-    })
+    }),
   );
 
   describe(
@@ -1678,7 +1678,7 @@ describe("Identifier", () => {
           ],
         },
       ],
-    })
+    }),
   );
 });
 
@@ -1732,7 +1732,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -1824,7 +1824,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -1866,7 +1866,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -1904,7 +1904,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -1916,7 +1916,7 @@ describe(
         parserOptions: { ecmaFeatures: { jsx: true } },
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -1940,7 +1940,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -1988,7 +1988,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2006,7 +2006,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2038,7 +2038,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2062,7 +2062,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2080,7 +2080,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2098,7 +2098,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2178,7 +2178,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe("MemberExpression", () => {
@@ -2252,7 +2252,7 @@ describe("MemberExpression", () => {
           ],
         },
       ],
-    })
+    }),
   );
 
   describe(
@@ -2288,7 +2288,7 @@ describe("MemberExpression", () => {
           ],
         },
       ],
-    })
+    }),
   );
 });
 
@@ -2296,7 +2296,7 @@ describe(
   "MetaProperty",
   testRule({
     valid: ["function x(){const y = new.target}; x()"],
-  })
+  }),
 );
 
 describe(
@@ -2314,7 +2314,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2344,7 +2344,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2380,7 +2380,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2398,14 +2398,14 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
   "RestElement",
   testRule({
     valid: ["const [...x] = []"],
-  })
+  }),
 );
 
 describe(
@@ -2423,7 +2423,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2468,7 +2468,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe("Super", () => {
@@ -2508,7 +2508,7 @@ describe("Super", () => {
           ],
         },
       ],
-    })
+    }),
   );
 });
 
@@ -2536,7 +2536,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2567,7 +2567,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2604,7 +2604,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2630,7 +2630,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe("ThisExpression", () => {
@@ -2694,7 +2694,7 @@ describe("ThisExpression", () => {
           ],
         },
       ],
-    })
+    }),
   );
 });
 
@@ -2712,7 +2712,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2739,7 +2739,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2784,7 +2784,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2811,7 +2811,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2829,7 +2829,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2892,7 +2892,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe(
@@ -2928,7 +2928,7 @@ describe(
         ],
       },
     ],
-  })
+  }),
 );
 
 describe("YieldExpression", () => {
@@ -2962,7 +2962,7 @@ describe("YieldExpression", () => {
           ],
         },
       ],
-    })
+    }),
   );
 });
 
