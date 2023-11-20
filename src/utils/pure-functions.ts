@@ -136,4 +136,4 @@ simdTypes.forEach((t) => {
   )
   .forEach((name) => (pureFunctions[name] = true));
 
-module.exports = pureFunctions;
+export { pureFunctions };

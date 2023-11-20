@@ -1,6 +1,6 @@
 const TREE_SHAKING_COMMENT_ID = "tree-shaking";
 
-const pureFunctions = require("../utils/pure-functions");
+import { pureFunctions } from "../utils/pure-functions";
 
 const getRootNode = (node) => {
   if (node.type === "MemberExpression") {
@@ -108,7 +108,7 @@ const isLocalVariableAWhitelistedModule = (variable, property, contextOptions) =
 
 const isFirstLetterUpperCase = (string) => string[0] >= "A" && string[0] <= "Z";
 
-module.exports = {
+export {
   getChildScopeForNodeIfExists,
   getLocalVariable,
   isLocalVariableAWhitelistedModule,

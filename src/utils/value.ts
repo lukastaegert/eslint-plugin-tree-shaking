@@ -1,4 +1,7 @@
 class Value {
+  value;
+  hasValue;
+
   static of(value) {
     return new Known(value);
   }
@@ -25,4 +28,4 @@ class Known extends Value {
 
 class Unknown extends Value {}
 
-module.exports = Value;
+export { Value };

@@ -5,7 +5,9 @@
  * * Deleting an object expression member whose value is a global does not need to be a side-effect
  */
 
-const rule = require("../../../lib/rules/no-side-effects-in-initialization");
+const {
+  noSideEffectsInInitialization: rule,
+} = require("../../../lib/rules/no-side-effects-in-initialization");
 const { Linter, RuleTester } = require("eslint");
 const rollup = require("rollup");
 
