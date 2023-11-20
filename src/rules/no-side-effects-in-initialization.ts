@@ -4,6 +4,19 @@
 //       http://mazurov.github.io/escope-demo
 //       https://npmdoc.github.io/node-npmdoc-escope/build/apidoc.html
 
+import {
+  getChildScopeForNodeIfExists,
+  isLocalVariableAWhitelistedModule,
+  getLocalVariable,
+  getRootNode,
+  getTreeShakingComments,
+  isFirstLetterUpperCase,
+  isPureFunction,
+  isFunctionSideEffectFree,
+  noEffects,
+} from "../utils/helpers";
+import { Value } from "../utils/value";
+
 const COMMENT_NO_SIDE_EFFECT_WHEN_CALLED = "no-side-effects-when-called";
 
 const getUnknownSideEffectError = (subject) => `Cannot determine side-effects of ${subject}`;
@@ -30,19 +43,6 @@ const ERROR_MUTATE_PARAMETER = getMutationError("function parameter");
 const ERROR_MUTATE_RETURN_VALUE = getMutationError("function return value");
 const ERROR_MUTATE_THIS = getMutationError("unknown this value");
 const ERROR_THROW = "Throwing an error is a side-effect";
-
-const {
-  getChildScopeForNodeIfExists,
-  isLocalVariableAWhitelistedModule,
-  getLocalVariable,
-  getRootNode,
-  getTreeShakingComments,
-  isFirstLetterUpperCase,
-  isPureFunction,
-  isFunctionSideEffectFree,
-  noEffects,
-} = require("../utils/helpers");
-const Value = require("../utils/value");
 
 const reportSideEffectsInProgram = (context, programNode) => {
   const checkedCalledNodes = new WeakSet();
@@ -1025,7 +1025,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
   }
 };
 
-module.exports = {
+export const noSideEffectsInInitialization = {
   meta: {
     docs: {
       description: "disallow side-effects in module initialization",

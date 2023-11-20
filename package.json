@@ -13,10 +13,13 @@
   "author": "Lukas Taegert",
   "main": "lib/index.js",
   "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
     "test": "mocha tests/lib/rules/no-side-effects-in-initialization.js",
-    "lint": "eslint --fix *.js lib/**/*.js tests/**/*.js",
+    "lint": "eslint --fix *.js src/**/*.ts tests/**/*.js",
     "semantic-release": "semantic-release",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@babel/core": "^7.22.11",

@@ -12,3 +12,5 @@ yarn-error.log*
 .yarn-integrity
 
 test-resources/test.js
+
+lib/
