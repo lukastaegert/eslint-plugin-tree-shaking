@@ -4,6 +4,8 @@
 //       http://mazurov.github.io/escope-demo
 //       https://npmdoc.github.io/node-npmdoc-escope/build/apidoc.html
 
+import { Rule, Scope } from "eslint";
+import { Program, Node } from "estree";
 import {
   getChildScopeForNodeIfExists,
   isLocalVariableAWhitelistedModule,
@@ -18,13 +20,30 @@ import {
 } from "../utils/helpers";
 import { Value } from "../utils/value";
 
+type Listener<T, K> = (
+  node: T extends { type: K } ? T : never,
+  scope: Scope.Scope,
+  options,
+) => void;
+
+type INodes<T extends Node = Node> = {
+  [K in T["type"]]: {
+    reportEffects?: Listener<T, K>;
+    reportEffectsWhenAssigned?: Listener<T, K>;
+    reportEffectsWhenCalled?: Listener<T, K>;
+    reportEffectsWhenMutated?: Listener<T, K>;
+    getValueAndReportEffects?: Listener<T, K>;
+  };
+};
+
 const COMMENT_NO_SIDE_EFFECT_WHEN_CALLED = "no-side-effects-when-called";
 
-const getUnknownSideEffectError = (subject) => `Cannot determine side-effects of ${subject}`;
+const getUnknownSideEffectError = (subject: string) =>
+  `Cannot determine side-effects of ${subject}`;
 
-const getAssignmentError = (target) => getUnknownSideEffectError(`assignment to ${target}`);
-const getCallError = (target) => getUnknownSideEffectError(`calling ${target}`);
-const getMutationError = (target) => getUnknownSideEffectError(`mutating ${target}`);
+const getAssignmentError = (target: string) => getUnknownSideEffectError(`assignment to ${target}`);
+const getCallError = (target: string) => getUnknownSideEffectError(`calling ${target}`);
+const getMutationError = (target: string) => getUnknownSideEffectError(`mutating ${target}`);
 
 const ERROR_ASSIGN_GLOBAL = getAssignmentError("global variable");
 const ERROR_CALL_DESTRUCTURED = getCallError("destructured variable");
@@ -45,7 +64,7 @@ const ERROR_MUTATE_RETURN_VALUE = getMutationError("function return value");
 const ERROR_MUTATE_THIS = getMutationError("unknown this value");
 const ERROR_THROW = "Throwing an error is a side-effect";
 
-const reportSideEffectsInProgram = (context, programNode) => {
+const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Program) => {
   const checkedCalledNodes = new WeakSet();
   const checkedNodesCalledWithNew = new WeakSet();
   const checkedMutatedNodes = new WeakSet();
@@ -182,7 +201,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
     delete: () => Value.unknown(),
   };
 
-  const NODES = {
+  const NODES: INodes = {
     ArrayExpression: {
       reportEffects(node, scope, options) {
         node.elements.forEach((subNode) => reportSideEffects(subNode, scope, options));
@@ -262,14 +281,16 @@ const reportSideEffectsInProgram = (context, programNode) => {
         );
       },
       reportEffectsWhenCalled(node, scope) {
-        const localVariable = getLocalVariable(node.callee.name, scope);
-        if (
-          localVariable &&
-          isLocalVariableAWhitelistedModule(localVariable, undefined, context.options)
-        ) {
-          return;
+        if (node.callee.type === "Identifier") {
+          const localVariable = getLocalVariable(node.callee.name, scope);
+          if (
+            localVariable &&
+            isLocalVariableAWhitelistedModule(localVariable, undefined, context.options)
+          ) {
+            return;
+          }
+          context.report({ node, message: ERROR_CALL_RETURN_VALUE });
         }
-        context.report({ node, message: ERROR_CALL_RETURN_VALUE });
       },
       reportEffectsWhenMutated(node) {
         context.report({ node, message: ERROR_MUTATE_RETURN_VALUE });
@@ -292,7 +313,9 @@ const reportSideEffectsInProgram = (context, programNode) => {
         node.body.forEach((subNode) => reportSideEffects(subNode, scope, options));
       },
       reportEffectsWhenCalled(node, scope, options) {
-        const classConstructor = node.body.find((subNode) => subNode.kind === "constructor");
+        const classConstructor = node.body.find(
+          (subNode) => subNode.type === "MethodDefinition" && subNode.kind === "constructor",
+        );
         if (classConstructor) {
           reportSideEffectsWhenCalled(classConstructor, scope, options);
         } else if (options.superClass) {
@@ -343,6 +366,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
       },
     },
 
+    // @ts-ignore TODO:
     ClassProperty: {
       reportEffects(node, scope, options) {
         reportSideEffects(node.key, scope, options);
@@ -540,7 +564,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
             reportSideEffectsInDefinitionWhenCalled(variableInScope.scope, options),
           );
         } else {
-          context.report(node, ERROR_CALL_GLOBAL);
+          context.report({ node, message: ERROR_CALL_GLOBAL });
         }
       },
       reportEffectsWhenMutated(node, scope, options) {
@@ -698,7 +722,12 @@ const reportSideEffectsInProgram = (context, programNode) => {
         const localVariable = getLocalVariable(rootNode.name, scope);
         if (localVariable) {
           if (
-            isLocalVariableAWhitelistedModule(localVariable, node.property.name, context.options) ||
+            (node.property.type === "Identifier" &&
+              isLocalVariableAWhitelistedModule(
+                localVariable,
+                node.property.name,
+                context.options,
+              )) ||
             hasPureNotation(node, context)
           ) {
             return;
@@ -744,8 +773,10 @@ const reportSideEffectsInProgram = (context, programNode) => {
     ObjectExpression: {
       reportEffects(node, scope, options) {
         node.properties.forEach((subNode) => {
-          reportSideEffects(subNode.key, scope, options);
-          reportSideEffects(subNode.value, scope, options);
+          if (subNode.type === "Property") {
+            reportSideEffects(subNode.key, scope, options);
+            reportSideEffects(subNode.value, scope, options);
+          }
         });
       },
       reportEffectsWhenMutated: noEffects,
@@ -754,8 +785,10 @@ const reportSideEffectsInProgram = (context, programNode) => {
     ObjectPattern: {
       reportEffects(node, scope, options) {
         node.properties.forEach((subNode) => {
-          reportSideEffects(subNode.key, scope, options);
-          reportSideEffects(subNode.value, scope, options);
+          if (subNode.type === "Property") {
+            reportSideEffects(subNode.key, scope, options);
+            reportSideEffects(subNode.value, scope, options);
+          }
         });
       },
     },
@@ -907,7 +940,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
     },
   };
 
-  const verifyNodeTypeIsKnown = (node) => {
+  const verifyNodeTypeIsKnown = (node: Node) => {
     if (!node) {
       return false;
     }
@@ -920,14 +953,14 @@ const reportSideEffectsInProgram = (context, programNode) => {
     return true;
   };
 
-  function reportSideEffects(node, scope, options) {
+  function reportSideEffects(node: Node, scope, options) {
     if (!verifyNodeTypeIsKnown(node)) {
       return;
     }
     if (NODES[node.type].reportEffects) {
-      NODES[node.type].reportEffects(node, scope, options);
+      NODES[node.type].reportEffects(node as any, scope, options);
     } else if (NODES[node.type].getValueAndReportEffects) {
-      NODES[node.type].getValueAndReportEffects(node, scope, options);
+      NODES[node.type].getValueAndReportEffects(node as any, scope, options);
     } else {
       context.report({ node, message: getUnknownSideEffectError(node.type) });
     }
@@ -995,7 +1028,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
     return true;
   };
 
-  function reportSideEffectsInDefinitionWhenCalled(scope, options) {
+  function reportSideEffectsInDefinitionWhenCalled(scope: Scope.Scope, options) {
     return (definition) => {
       if (!verifyDefinitionTypeIsKnown(definition)) {
         return;
@@ -1006,7 +1039,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
     };
   }
 
-  function reportSideEffectsInDefinitionWhenMutated(scope, options) {
+  function reportSideEffectsInDefinitionWhenMutated(scope: Scope.Scope, options) {
     return (definition) => {
       if (!verifyDefinitionTypeIsKnown(definition)) {
         return;
@@ -1036,7 +1069,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
   }
 };
 
-export const noSideEffectsInInitialization = {
+export const noSideEffectsInInitialization: Rule.RuleModule = {
   meta: {
     docs: {
       description: "disallow side-effects in module initialization",

@@ -16,10 +16,10 @@ const getChildScopeForNodeIfExists = (node: Node, currentScope: Scope.Scope) =>
 
 const getLocalVariable = (variableName: string, scope: Scope.Scope) => {
   const variableInCurrentScope = scope.variables.find(({ name }) => name === variableName);
-  return (
-    variableInCurrentScope ||
-    (scope.upper && scope.upper.type !== "global" && getLocalVariable(variableName, scope.upper))
-  );
+  if (variableInCurrentScope) return variableInCurrentScope;
+
+  if (scope.upper && scope.upper.type !== "global")
+    return getLocalVariable(variableName, scope.upper);
 };
 
 const flattenMemberExpressionIfPossible = (node: Node): string | null => {
@@ -38,7 +38,7 @@ const flattenMemberExpressionIfPossible = (node: Node): string | null => {
   }
 };
 
-const hasPureNotation = (node, context) => {
+const hasPureNotation = (node: Node, context: Rule.RuleContext) => {
   const leadingComments = context.getSourceCode().getCommentsBefore(node);
   if (leadingComments.length) {
     const lastComment = leadingComments[leadingComments.length - 1].value;
@@ -50,7 +50,7 @@ const hasPureNotation = (node, context) => {
   }
 };
 
-const isPureFunction = (node, context) => {
+const isPureFunction = (node: Node, context: Rule.RuleContext) => {
   if (hasPureNotation(node, context)) return true;
 
   const flattenedExpression = flattenMemberExpressionIfPossible(node);
@@ -85,7 +85,7 @@ const getTreeShakingComments = (comments: Comment[]) => {
 
 const isFunctionSideEffectFree = (
   functionName: string,
-  moduleName: string,
+  moduleName,
   contextOptions: Rule.RuleContext["options"],
 ) => {
   if (contextOptions.length === 0) {
@@ -113,7 +113,7 @@ const isLocalVariableAWhitelistedModule = (
   if (
     variable.scope.type === "module" &&
     variable.defs[0].parent &&
-    variable.defs[0].parent.source
+    variable.defs[0].parent.type === "ImportDeclaration"
   ) {
     return isFunctionSideEffectFree(property, variable.defs[0].parent.source.value, contextOptions);
   }
