@@ -1,8 +1,8 @@
-class Value {
-  value;
-  hasValue;
+class Value<T> {
+  value: T;
+  hasValue: boolean;
 
-  static of(value) {
+  static of<T>(value: T) {
     return new Known(value);
   }
 
@@ -10,7 +10,7 @@ class Value {
     return new Unknown();
   }
 
-  chain(mappingFunction) {
+  chain(mappingFunction: (value: T) => Value<T>) {
     if (this.hasValue) {
       return mappingFunction(this.value);
     }
@@ -18,14 +18,14 @@ class Value {
   }
 }
 
-class Known extends Value {
-  constructor(value) {
+class Known<T> extends Value<T> {
+  constructor(value: T) {
     super();
     this.value = value;
     this.hasValue = true;
   }
 }
 
-class Unknown extends Value {}
+class Unknown<T> extends Value<T> {}
 
 export { Value };
