@@ -77,7 +77,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
             context.options,
           )
         ) {
-          context.report(definition.name, ERROR_CALL_IMPORT);
+          context.report({ node: definition.name, message: ERROR_CALL_IMPORT });
         }
       },
       reportEffectsWhenMutated(definition) {
@@ -85,7 +85,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
           return;
         }
         checkedMutatedNodes.add(definition.name);
-        context.report(definition.name, ERROR_MUTATE_IMPORT);
+        context.report({ node: definition.name, message: ERROR_MUTATE_IMPORT });
       },
     },
     Parameter: {
@@ -94,14 +94,14 @@ const reportSideEffectsInProgram = (context, programNode) => {
           return;
         }
         checkedCalledNodes.add(definition.name);
-        context.report(definition.name, ERROR_CALL_PARAMETER);
+        context.report({ node: definition.name, message: ERROR_CALL_PARAMETER });
       },
       reportEffectsWhenMutated(definition) {
         if (checkedMutatedNodes.has(definition.name)) {
           return;
         }
         checkedMutatedNodes.add(definition.name);
-        context.report(definition.name, ERROR_MUTATE_PARAMETER);
+        context.report({ node: definition.name, message: ERROR_MUTATE_PARAMETER });
       },
     },
     Variable: {
@@ -269,10 +269,10 @@ const reportSideEffectsInProgram = (context, programNode) => {
         ) {
           return;
         }
-        context.report(node, ERROR_CALL_RETURN_VALUE);
+        context.report({ node, message: ERROR_CALL_RETURN_VALUE });
       },
       reportEffectsWhenMutated(node) {
-        context.report(node, ERROR_MUTATE_RETURN_VALUE);
+        context.report({ node, message: ERROR_MUTATE_RETURN_VALUE });
       },
     },
 
@@ -382,7 +382,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
 
     DebuggerStatement: {
       reportEffects(node) {
-        context.report(node, ERROR_DEBUGGER);
+        context.report({ node, message: ERROR_DEBUGGER });
       },
     },
 
@@ -458,7 +458,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
         }
         reportSideEffects(node.right, forScope, options);
         reportSideEffects(node.body, forScope, options);
-        context.report(node.right, ERROR_ITERATOR);
+        context.report({ node: node.right, message: ERROR_ITERATOR });
       },
     },
 
@@ -519,7 +519,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
       reportEffects: noEffects,
       reportEffectsWhenAssigned(node, scope) {
         if (!getLocalVariable(node.name, scope)) {
-          context.report(node, ERROR_ASSIGN_GLOBAL);
+          context.report({ node, message: ERROR_ASSIGN_GLOBAL });
         }
       },
       reportEffectsWhenCalled(node, scope, options) {
@@ -531,7 +531,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
         if (variableInScope) {
           variableInScope.references.forEach(({ from, identifier, partial, writeExpr }) => {
             if (partial) {
-              context.report(identifier, ERROR_CALL_DESTRUCTURED);
+              context.report({ node: identifier, message: ERROR_CALL_DESTRUCTURED });
             } else {
               writeExpr && reportSideEffectsWhenCalled(writeExpr, from, options);
             }
@@ -548,7 +548,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
         if (localVariable) {
           localVariable.references.forEach(({ from, identifier, partial, writeExpr }) => {
             if (partial) {
-              context.report(identifier, ERROR_MUTATE_DESTRUCTURED);
+              context.report({ node: identifier, message: ERROR_MUTATE_DESTRUCTURED });
             } else {
               writeExpr && reportSideEffectsWhenMutated(writeExpr, from, options);
             }
@@ -557,7 +557,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
             reportSideEffectsInDefinitionWhenMutated(localVariable.scope, options),
           );
         } else {
-          context.report(node, ERROR_MUTATE_GLOBAL);
+          context.report({ node, message: ERROR_MUTATE_GLOBAL });
         }
       },
     },
@@ -610,7 +610,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
           if (variableInScope) {
             variableInScope.references.forEach(({ from, identifier, partial, writeExpr }) => {
               if (partial) {
-                context.report(identifier, ERROR_CALL_DESTRUCTURED);
+                context.report({ node: identifier, message: ERROR_CALL_DESTRUCTURED });
               } else {
                 reportSideEffectsWhenCalled(
                   writeExpr,
@@ -626,7 +626,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
               ),
             );
           } else {
-            context.report(node, ERROR_CALL_GLOBAL);
+            context.report({ node, message: ERROR_CALL_GLOBAL });
           }
         }
       },
@@ -634,7 +634,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
 
     JSXMemberExpression: {
       reportEffectsWhenCalled(node) {
-        context.report(node.property, ERROR_CALL_MEMBER);
+        context.report({ node: node.property, message: ERROR_CALL_MEMBER });
       },
     },
 
@@ -686,13 +686,13 @@ const reportSideEffectsInProgram = (context, programNode) => {
         reportSideEffectsWhenMutated(node.object, scope, options);
       },
       reportEffectsWhenMutated(node) {
-        context.report(node.property, ERROR_MUTATE_MEMBER);
+        context.report({ node: node.property, message: ERROR_MUTATE_MEMBER });
       },
       reportEffectsWhenCalled(node, scope, options) {
         reportSideEffects(node, scope, options);
         const rootNode = getRootNode(node);
         if (rootNode.type !== "Identifier") {
-          context.report(node.property, ERROR_CALL_MEMBER);
+          context.report({ node: node.property, message: ERROR_CALL_MEMBER });
           return;
         }
         const localVariable = getLocalVariable(rootNode.name, scope);
@@ -703,12 +703,12 @@ const reportSideEffectsInProgram = (context, programNode) => {
           ) {
             return;
           } else {
-            context.report(node.property, ERROR_CALL_MEMBER);
+            context.report({ node: node.property, message: ERROR_CALL_MEMBER });
             return;
           }
         }
         if (!isPureFunction(node, context)) {
-          context.report(node.property, ERROR_CALL_MEMBER);
+          context.report({ node: node.property, message: ERROR_CALL_MEMBER });
         }
       },
     },
@@ -791,7 +791,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
     Super: {
       reportEffects: noEffects,
       reportEffectsWhenCalled(node, scope, options) {
-        context.report(node, getCallError("super"));
+        context.report({ node, message: getCallError("super") });
       },
     },
 
@@ -831,14 +831,14 @@ const reportSideEffectsInProgram = (context, programNode) => {
       reportEffects: noEffects,
       reportEffectsWhenMutated(node, scope, options) {
         if (!options.hasValidThis) {
-          context.report(node, ERROR_MUTATE_THIS);
+          context.report({ node, message: ERROR_MUTATE_THIS });
         }
       },
     },
 
     ThrowStatement: {
       reportEffects(node) {
-        context.report(node, ERROR_THROW);
+        context.report({ node, message: ERROR_THROW });
       },
     },
 
@@ -854,7 +854,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
       getValueAndReportEffects(node, scope, options) {
         if (node.operator === "delete") {
           if (node.argument.type !== "MemberExpression") {
-            context.report(node.argument, ERROR_DELETE_OTHER);
+            context.report({ node: node.argument, message: ERROR_DELETE_OTHER });
           } else {
             reportSideEffectsWhenMutated(node.argument.object, scope, options);
           }
@@ -929,7 +929,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
     } else if (NODES[node.type].getValueAndReportEffects) {
       NODES[node.type].getValueAndReportEffects(node, scope, options);
     } else {
-      context.report(node, getUnknownSideEffectError(node.type));
+      context.report({ node, message: getUnknownSideEffectError(node.type) });
     }
   }
 
@@ -940,7 +940,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
     if (NODES[node.type].reportEffectsWhenAssigned) {
       NODES[node.type].reportEffectsWhenAssigned(node, scope, options);
     } else {
-      context.report(node, getAssignmentError(node.type));
+      context.report({ node, message: getAssignmentError(node.type) });
     }
   }
 
@@ -952,7 +952,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
     if (NODES[node.type].reportEffectsWhenMutated) {
       NODES[node.type].reportEffectsWhenMutated(node, scope, options);
     } else {
-      context.report(node, getMutationError(node.type));
+      context.report({ node, message: getMutationError(node.type) });
     }
   }
 
@@ -972,7 +972,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
     if (NODES[node.type].reportEffectsWhenCalled) {
       NODES[node.type].reportEffectsWhenCalled(node, scope, options);
     } else {
-      context.report(node, getCallError(node.type));
+      context.report({ node, message: getCallError(node.type) });
     }
   }
 
@@ -1018,13 +1018,14 @@ const reportSideEffectsInProgram = (context, programNode) => {
   }
 
   function reportFatalError(node, message) {
-    context.report(
+    context.report({
       node,
-      message +
+      message:
+        message +
         "\nIf you are using the latest version of this plugin, please " +
         "consider filing an issue noting this message, the offending statement, your ESLint " +
         "version, and any active ESLint presets and plugins",
-    );
+    });
   }
 
   const moduleScope = getChildScopeForNodeIfExists(programNode, context.getScope());
