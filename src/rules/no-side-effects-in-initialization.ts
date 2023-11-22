@@ -14,6 +14,7 @@ import {
   isPureFunction,
   isFunctionSideEffectFree,
   noEffects,
+  hasPureNotation,
 } from "../utils/helpers";
 import { Value } from "../utils/value";
 
@@ -522,6 +523,10 @@ const reportSideEffectsInProgram = (context, programNode) => {
         }
       },
       reportEffectsWhenCalled(node, scope, options) {
+        if (isPureFunction(node, context)) {
+          return;
+        }
+
         const variableInScope = getLocalVariable(node.name, scope);
         if (variableInScope) {
           variableInScope.references.forEach(({ from, identifier, partial, writeExpr }) => {
@@ -534,7 +539,7 @@ const reportSideEffectsInProgram = (context, programNode) => {
           variableInScope.defs.forEach(
             reportSideEffectsInDefinitionWhenCalled(variableInScope.scope, options),
           );
-        } else if (!isPureFunction(node, context)) {
+        } else {
           context.report(node, ERROR_CALL_GLOBAL);
         }
       },
@@ -693,7 +698,8 @@ const reportSideEffectsInProgram = (context, programNode) => {
         const localVariable = getLocalVariable(rootNode.name, scope);
         if (localVariable) {
           if (
-            isLocalVariableAWhitelistedModule(localVariable, node.property.name, context.options)
+            isLocalVariableAWhitelistedModule(localVariable, node.property.name, context.options) ||
+            hasPureNotation(node, context)
           ) {
             return;
           } else {
@@ -722,6 +728,10 @@ const reportSideEffectsInProgram = (context, programNode) => {
 
     NewExpression: {
       reportEffects(node, scope, options) {
+        if (hasPureNotation(node, context)) {
+          return false;
+        }
+
         node.arguments.forEach((subNode) => reportSideEffects(subNode, scope, options));
         reportSideEffectsWhenCalled(
           node.callee,

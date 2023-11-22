@@ -1751,6 +1751,7 @@ describe(
       'import /* tree-shaking  no-side-effects-when-called*/ /* test */ x from "import-default-no-effects"; x()',
       'import {/* tree-shaking  no-side-effects-when-called */ x} from "import-no-effects"; x()',
       'import {x as /* tree-shaking  no-side-effects-when-called */ y} from "import-no-effects"; y()',
+      'import {x} from "import"; /*@__PURE__*/ x()',
     ],
     invalid: [
       {
@@ -2325,6 +2326,7 @@ describe(
     valid: [
       "const x = new (function (){this.x = 1})()",
       "function x(){this.y = 1}; const z = new x()",
+      "/*@__PURE__*/ new ext()",
     ],
     invalid: [
       {

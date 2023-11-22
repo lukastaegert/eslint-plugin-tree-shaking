@@ -36,7 +36,7 @@ const flattenMemberExpressionIfPossible = (node) => {
   }
 };
 
-const isPureFunction = (node, context) => {
+const hasPureNotation = (node, context) => {
   const leadingComments = context.getSourceCode().getCommentsBefore(node);
   if (leadingComments.length) {
     const lastComment = leadingComments[leadingComments.length - 1].value;
@@ -46,6 +46,10 @@ const isPureFunction = (node, context) => {
       return true;
     }
   }
+};
+
+const isPureFunction = (node, context) => {
+  if (hasPureNotation(node, context)) return true;
 
   const flattenedExpression = flattenMemberExpressionIfPossible(node);
   if (context.options.length > 0) {
@@ -118,4 +122,5 @@ export {
   isFirstLetterUpperCase,
   isPureFunction,
   noEffects,
+  hasPureNotation,
 };
