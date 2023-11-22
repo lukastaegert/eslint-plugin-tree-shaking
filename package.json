@@ -10,6 +10,9 @@
     "rollup",
     "webpack"
   ],
+  "files": [
+    "lib"
+  ],
   "author": "Lukas Taegert",
   "main": "lib/index.js",
   "scripts": {
