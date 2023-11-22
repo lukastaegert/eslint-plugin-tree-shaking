@@ -1,18 +1,20 @@
 const TREE_SHAKING_COMMENT_ID = "tree-shaking";
 
+import { Node, Comment } from "estree";
 import { pureFunctions } from "../utils/pure-functions";
+import { Scope, Rule } from "eslint";
 
-const getRootNode = (node) => {
+const getRootNode = (node: Node): Node => {
   if (node.type === "MemberExpression") {
     return getRootNode(node.object);
   }
   return node;
 };
 
-const getChildScopeForNodeIfExists = (node, currentScope) =>
+const getChildScopeForNodeIfExists = (node: Node, currentScope: Scope.Scope) =>
   currentScope.childScopes.find((scope) => scope.block === node);
 
-const getLocalVariable = (variableName, scope) => {
+const getLocalVariable = (variableName: string, scope: Scope.Scope) => {
   const variableInCurrentScope = scope.variables.find(({ name }) => name === variableName);
   return (
     variableInCurrentScope ||
@@ -20,7 +22,7 @@ const getLocalVariable = (variableName, scope) => {
   );
 };
 
-const flattenMemberExpressionIfPossible = (node) => {
+const flattenMemberExpressionIfPossible = (node: Node): string | null => {
   switch (node.type) {
     case "MemberExpression":
       if (node.computed || node.property.type !== "Identifier") {
@@ -66,13 +68,13 @@ const isPureFunction = (node, context) => {
 
 const noEffects = () => {};
 
-const parseComment = (comment) =>
+const parseComment = (comment: Comment) =>
   comment.value
     .split(" ")
     .map((token) => token.trim())
     .filter(Boolean);
 
-const getTreeShakingComments = (comments) => {
+const getTreeShakingComments = (comments: Comment[]) => {
   const treeShakingComments = comments
     .map(parseComment)
     .filter(([id]) => id === TREE_SHAKING_COMMENT_ID)
@@ -81,7 +83,11 @@ const getTreeShakingComments = (comments) => {
   return { has: (token) => treeShakingComments.indexOf(token) >= 0 };
 };
 
-const isFunctionSideEffectFree = (functionName, moduleName, contextOptions) => {
+const isFunctionSideEffectFree = (
+  functionName: string,
+  moduleName: string,
+  contextOptions: Rule.RuleContext["options"],
+) => {
   if (contextOptions.length === 0) {
     return false;
   }
@@ -99,7 +105,11 @@ const isFunctionSideEffectFree = (functionName, moduleName, contextOptions) => {
   return false;
 };
 
-const isLocalVariableAWhitelistedModule = (variable, property, contextOptions) => {
+const isLocalVariableAWhitelistedModule = (
+  variable,
+  property: string,
+  contextOptions: Rule.RuleContext["options"],
+) => {
   if (
     variable.scope.type === "module" &&
     variable.defs[0].parent &&
@@ -110,7 +120,7 @@ const isLocalVariableAWhitelistedModule = (variable, property, contextOptions) =
   return false;
 };
 
-const isFirstLetterUpperCase = (string) => string[0] >= "A" && string[0] <= "Z";
+const isFirstLetterUpperCase = (string: string) => string[0] >= "A" && string[0] <= "Z";
 
 export {
   getChildScopeForNodeIfExists,

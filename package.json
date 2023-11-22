@@ -29,6 +29,8 @@
     "@babel/eslint-parser": "^7.22.11",
     "@commitlint/cli": "^17.7.1",
     "@commitlint/config-angular": "^17.7.0",
+    "@types/eslint": "^8.44.7",
+    "@types/estree": "^1.0.5",
     "@typescript-eslint/parser": "^6.5.0",
     "babel-eslint": "^10.1.0",
     "eslint": "^8.48.0",
