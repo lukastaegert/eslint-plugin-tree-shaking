@@ -1,15 +1,12 @@
-/* eslint-env mocha */
-
 /* Possible improvements for rollup:
  * * Properly handle valid this values
  * * Deleting an object expression member whose value is a global does not need to be a side-effect
  */
 
-const {
-  noSideEffectsInInitialization: rule,
-} = require("../../../lib/rules/no-side-effects-in-initialization");
-const { Linter, RuleTester } = require("eslint");
-const rollup = require("rollup");
+import { describe, it } from "vitest";
+import { noSideEffectsInInitialization as rule } from "./no-side-effects-in-initialization";
+import { Linter, RuleTester } from "eslint";
+import { rollup } from "rollup";
 
 const RULE_NAME = "no-side-effects-in-initialization";
 
@@ -22,6 +19,7 @@ const PARSER_OPTIONS = {
 const PARSER_BABEL = require.resolve("@babel/eslint-parser");
 const PARSER_TYPESCRIPT = require.resolve("@typescript-eslint/parser");
 
+// @ts-ignore
 RuleTester.setDefaultConfig({
   parserOptions: PARSER_OPTIONS,
 });
@@ -31,39 +29,40 @@ const linter = new Linter();
 linter.defineRule(RULE_NAME, rule);
 
 const createRollupOutput = (code) =>
-  rollup
-    .rollup({
-      input: "main",
-      treeshake: { unknownGlobalSideEffects: false, propertyReadSideEffects: false },
-      plugins: {
-        resolveId(id) {
-          return id;
-        },
-        load(id) {
-          switch (id) {
-            case "main":
-              return "import 'test'";
-            case "test":
-              return code;
-            case "import":
-              return "export const x=ext";
-            case "import-default":
-              return "export default ext";
-            case "import-default-no-effects":
-              return "export default function(){}";
-            case "import-no-effects":
-              return "export const x=function(){}";
-            default:
-              throw new Error(`Unexpected import of "${id}"`);
-          }
-        },
+  rollup({
+    input: "main",
+    treeshake: { unknownGlobalSideEffects: false, propertyReadSideEffects: false },
+    // @ts-ignore
+    plugins: {
+      resolveId(id) {
+        return id;
       },
-    })
+      load(id) {
+        switch (id) {
+          case "main":
+            return "import 'test'";
+          case "test":
+            return code;
+          case "import":
+            return "export const x=ext";
+          case "import-default":
+            return "export default ext";
+          case "import-default-no-effects":
+            return "export default function(){}";
+          case "import-no-effects":
+            return "export const x=function(){}";
+          default:
+            throw new Error(`Unexpected import of "${id}"`);
+        }
+      },
+    },
+  })
     .then((bundle) => bundle.generate({ format: "es" }))
     .then((result) => result.output[0].code.trim());
 
 const getEsLintErrors = (code) =>
   linter.verify(code, {
+    // @ts-ignore
     parserOptions: PARSER_OPTIONS,
     rules: { [RULE_NAME]: 1 },
   });
@@ -2980,4 +2979,6 @@ describe("Supports TypeScript nodes", () => {
     ],
     invalid: [],
   });
+
+  it.skip("");
 });
