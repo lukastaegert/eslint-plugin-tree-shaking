@@ -18,8 +18,8 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
-    "test": "mocha tests/lib/rules/no-side-effects-in-initialization.js",
-    "lint": "eslint --fix *.js src/**/*.ts tests/**/*.js",
+    "test": "vitest run",
+    "lint": "eslint --fix *.js src/**/*.ts tests/**/*.ts",
     "semantic-release": "semantic-release",
     "prepare": "husky install",
     "prepublishOnly": "npm run build"
@@ -41,11 +41,11 @@
     "eslint-plugin-promise": "^6.1.1",
     "husky": "^8.0.3",
     "lint-staged": "^14.0.1",
-    "mocha": "^10.2.0",
     "prettier": "^3.0.3",
     "rollup": "^3.28.1",
     "semantic-release": "^21.1.1",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vitest": "^0.34.6"
   },
   "engines": {
     "node": ">=6.0.0"
