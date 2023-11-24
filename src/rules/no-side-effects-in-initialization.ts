@@ -4,8 +4,9 @@
 //       http://mazurov.github.io/escope-demo
 //       https://npmdoc.github.io/node-npmdoc-escope/build/apidoc.html
 
+/// <reference types="estree-jsx" />
 import { Rule, Scope } from "eslint";
-import { Program, Node } from "estree";
+import { Program, Node, BinaryOperator, LogicalOperator, UnaryOperator } from "estree";
 import {
   getChildScopeForNodeIfExists,
   isLocalVariableAWhitelistedModule,
@@ -20,19 +21,23 @@ import {
 } from "../utils/helpers";
 import { Value } from "../utils/value";
 
-type Listener<T, K> = (
+type ListenerArgs<T, K> = [
   node: T extends { type: K } ? T : never,
   scope: Scope.Scope,
-  options,
-) => void;
+  options: any, // Rule.RuleContext["options"],
+];
 
-type INodes<T extends Node = Node> = {
+type Listener<T, K> = (...args: ListenerArgs<T, K>) => void;
+
+type ListenerWithValue<T, K> = (...args: ListenerArgs<T, K>) => Value;
+
+type ListenerMap<T extends { type: any }> = {
   [K in T["type"]]: {
     reportEffects?: Listener<T, K>;
     reportEffectsWhenAssigned?: Listener<T, K>;
     reportEffectsWhenCalled?: Listener<T, K>;
     reportEffectsWhenMutated?: Listener<T, K>;
-    getValueAndReportEffects?: Listener<T, K>;
+    getValueAndReportEffects?: ListenerWithValue<T, K>;
   };
 };
 
@@ -69,7 +74,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
   const checkedNodesCalledWithNew = new WeakSet();
   const checkedMutatedNodes = new WeakSet();
 
-  const DEFINITIONS = {
+  const DEFINITIONS: Partial<ListenerMap<Scope.Definition>> = {
     ClassName: {
       reportEffectsWhenCalled(definition, scope, options) {
         reportSideEffectsWhenCalled(definition.node, scope, options);
@@ -128,7 +133,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     },
   };
 
-  const BINARY_OPERATORS = {
+  const BINARY_OPERATORS: Record<BinaryOperator, (left: any, right: any) => any> = {
     // eslint-disable-next-line eqeqeq
     "==": (left, right) => left == right,
     // eslint-disable-next-line eqeqeq
@@ -155,7 +160,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     instanceof: (left, right) => left instanceof right,
   };
 
-  const LOGICAL_OPERATORS = {
+  const LOGICAL_OPERATORS: Record<LogicalOperator, (left: any, right: any) => any> = {
     "&&": (getAndReportLeft, getAndReportRight) => {
       const leftValue = getAndReportLeft();
       if (!leftValue.hasValue) {
@@ -191,7 +196,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     },
   };
 
-  const UNARY_OPERATORS = {
+  const UNARY_OPERATORS: Record<UnaryOperator, (...args: any[]) => Value> = {
     "-": (value) => Value.of(-value),
     "+": (value) => Value.of(+value),
     "!": (value) => Value.of(!value),
@@ -201,16 +206,20 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     delete: () => Value.unknown(),
   };
 
-  const NODES: INodes = {
+  const NODES: ListenerMap<Node> = {
     ArrayExpression: {
       reportEffects(node, scope, options) {
-        node.elements.forEach((subNode) => reportSideEffects(subNode, scope, options));
+        node.elements.forEach((subNode) => {
+          if (subNode) reportSideEffects(subNode, scope, options);
+        });
       },
     },
 
     ArrayPattern: {
       reportEffects(node, scope, options) {
-        node.elements.forEach((subNode) => reportSideEffects(subNode, scope, options));
+        node.elements.forEach((subNode) => {
+          if (subNode) reportSideEffects(subNode, scope, options);
+        });
       },
     },
 
@@ -330,7 +339,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
 
     ClassDeclaration: {
       reportEffects(node, scope, options) {
-        reportSideEffects(node.superClass, scope, options);
+        if (node.superClass) reportSideEffects(node.superClass, scope, options);
         reportSideEffects(node.body, scope, options);
       },
       reportEffectsWhenCalled(node, scope, options) {
@@ -349,7 +358,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
 
     ClassExpression: {
       reportEffects(node, scope, options) {
-        reportSideEffects(node.superClass, scope, options);
+        if (node.superClass) reportSideEffects(node.superClass, scope, options);
         reportSideEffects(node.body, scope, options);
       },
       reportEffectsWhenCalled(node, scope, options) {
@@ -489,9 +498,9 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     ForStatement: {
       reportEffects(node, scope, options) {
         const forScope = getChildScopeForNodeIfExists(node, scope) || scope;
-        reportSideEffects(node.init, forScope, options);
-        reportSideEffects(node.test, forScope, options);
-        reportSideEffects(node.update, forScope, options);
+        if (node.init) reportSideEffects(node.init, forScope, options);
+        if (node.test) reportSideEffects(node.test, forScope, options);
+        if (node.update) reportSideEffects(node.update, forScope, options);
         reportSideEffects(node.body, forScope, options);
       },
     },
@@ -553,6 +562,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
 
         const variableInScope = getLocalVariable(node.name, scope);
         if (variableInScope) {
+          // @ts-ignore TODO:
           variableInScope.references.forEach(({ from, identifier, partial, writeExpr }) => {
             if (partial) {
               context.report({ node: identifier, message: ERROR_CALL_DESTRUCTURED });
@@ -570,6 +580,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
       reportEffectsWhenMutated(node, scope, options) {
         const localVariable = getLocalVariable(node.name, scope);
         if (localVariable) {
+          // @ts-ignore TODO:
           localVariable.references.forEach(({ from, identifier, partial, writeExpr }) => {
             if (partial) {
               context.report({ node: identifier, message: ERROR_MUTATE_DESTRUCTURED });
@@ -613,6 +624,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     JSXElement: {
       reportEffects(node, scope, options) {
         reportSideEffects(node.openingElement, scope, options);
+        // @ts-ignore TODO:
         node.children.forEach((subNode) => reportSideEffects(subNode, scope, options));
       },
     },
@@ -632,6 +644,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
         if (isFirstLetterUpperCase(node.name)) {
           const variableInScope = getLocalVariable(node.name, scope);
           if (variableInScope) {
+            // @ts-ignore TODO:
             variableInScope.references.forEach(({ from, identifier, partial, writeExpr }) => {
               if (partial) {
                 context.report({ node: identifier, message: ERROR_CALL_DESTRUCTURED });
@@ -863,6 +876,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     ThisExpression: {
       reportEffects: noEffects,
       reportEffectsWhenMutated(node, scope, options) {
+        // @ts-ignore TODO:
         if (!options.hasValidThis) {
           context.report({ node, message: ERROR_MUTATE_THIS });
         }
@@ -922,7 +936,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
         ) {
           reportSideEffectsWhenCalled(node.id, scope, options);
         }
-        reportSideEffects(node.init, scope, options);
+        if (node.init) reportSideEffects(node.init, scope, options);
       },
     },
 
@@ -953,7 +967,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     return true;
   };
 
-  function reportSideEffects(node: Node, scope, options) {
+  function reportSideEffects(node: Node, scope: Scope.Scope, options) {
     if (!verifyNodeTypeIsKnown(node)) {
       return;
     }
@@ -966,30 +980,30 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     }
   }
 
-  function reportSideEffectsWhenAssigned(node, scope, options) {
+  function reportSideEffectsWhenAssigned(node: Node, scope: Scope.Scope, options) {
     if (!verifyNodeTypeIsKnown(node)) {
       return;
     }
     if (NODES[node.type].reportEffectsWhenAssigned) {
-      NODES[node.type].reportEffectsWhenAssigned(node, scope, options);
+      NODES[node.type].reportEffectsWhenAssigned(node as any, scope, options);
     } else {
       context.report({ node, message: getAssignmentError(node.type) });
     }
   }
 
-  function reportSideEffectsWhenMutated(node, scope, options) {
+  function reportSideEffectsWhenMutated(node: Node, scope: Scope.Scope, options) {
     if (!verifyNodeTypeIsKnown(node) || checkedMutatedNodes.has(node)) {
       return;
     }
     checkedMutatedNodes.add(node);
     if (NODES[node.type].reportEffectsWhenMutated) {
-      NODES[node.type].reportEffectsWhenMutated(node, scope, options);
+      NODES[node.type].reportEffectsWhenMutated(node as any, scope, options);
     } else {
       context.report({ node, message: getMutationError(node.type) });
     }
   }
 
-  function reportSideEffectsWhenCalled(node, scope, options) {
+  function reportSideEffectsWhenCalled(node: Node, scope: Scope.Scope, options) {
     if (
       !verifyNodeTypeIsKnown(node) ||
       checkedCalledNodes.has(node) ||
@@ -1003,24 +1017,28 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
       checkedCalledNodes.add(node);
     }
     if (NODES[node.type].reportEffectsWhenCalled) {
-      NODES[node.type].reportEffectsWhenCalled(node, scope, options);
+      NODES[node.type].reportEffectsWhenCalled(node as any, scope, options);
     } else {
       context.report({ node, message: getCallError(node.type) });
     }
   }
 
-  function getValueAndReportSideEffects(node, scope, options) {
+  function getValueAndReportSideEffects(
+    node: Node,
+    scope: Scope.Scope,
+    options: Rule.RuleContext["options"],
+  ): Value {
     if (!verifyNodeTypeIsKnown(node)) {
       return;
     }
     if (NODES[node.type].getValueAndReportEffects) {
-      return NODES[node.type].getValueAndReportEffects(node, scope, options);
+      return NODES[node.type].getValueAndReportEffects(node as any, scope, options);
     }
     reportSideEffects(node, scope, options);
     return Value.unknown();
   }
 
-  const verifyDefinitionTypeIsKnown = (definition) => {
+  const verifyDefinitionTypeIsKnown = (definition: Scope.Definition) => {
     if (!DEFINITIONS[definition.type]) {
       reportFatalError(definition.name, `Unknown definition type ${definition.type}.`);
       return false;
@@ -1028,29 +1046,35 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     return true;
   };
 
-  function reportSideEffectsInDefinitionWhenCalled(scope: Scope.Scope, options) {
-    return (definition) => {
+  function reportSideEffectsInDefinitionWhenCalled(
+    scope: Scope.Scope,
+    options: Rule.RuleContext["options"],
+  ) {
+    return (definition: Scope.Definition) => {
       if (!verifyDefinitionTypeIsKnown(definition)) {
         return;
       }
       if (DEFINITIONS[definition.type].reportEffectsWhenCalled) {
-        DEFINITIONS[definition.type].reportEffectsWhenCalled(definition, scope, options);
+        DEFINITIONS[definition.type].reportEffectsWhenCalled(definition as any, scope, options);
       }
     };
   }
 
-  function reportSideEffectsInDefinitionWhenMutated(scope: Scope.Scope, options) {
-    return (definition) => {
+  function reportSideEffectsInDefinitionWhenMutated(
+    scope: Scope.Scope,
+    options: Rule.RuleContext["options"],
+  ) {
+    return (definition: Scope.Definition) => {
       if (!verifyDefinitionTypeIsKnown(definition)) {
         return;
       }
       if (DEFINITIONS[definition.type].reportEffectsWhenMutated) {
-        DEFINITIONS[definition.type].reportEffectsWhenMutated(definition, scope, options);
+        DEFINITIONS[definition.type].reportEffectsWhenMutated(definition as any, scope, options);
       }
     };
   }
 
-  function reportFatalError(node, message) {
+  function reportFatalError(node: Node, message: string) {
     context.report({
       node,
       message:

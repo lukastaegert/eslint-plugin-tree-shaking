@@ -1,6 +1,6 @@
 // copied from rollup.js
 
-const pureFunctions = {};
+const pureFunctions: Record<string, boolean> = {};
 
 const arrayTypes =
   "Array Int8Array Uint8Array Uint8ClampedArray Int16Array Uint16Array Int32Array Uint32Array Float32Array Float64Array".split(
@@ -11,7 +11,7 @@ const simdMethods =
   "abs add and bool check div equal extractLane fromFloat32x4 fromFloat32x4Bits fromFloat64x2 fromFloat64x2Bits fromInt16x8Bits fromInt32x4 fromInt32x4Bits fromInt8x16Bits greaterThan greaterThanOrEqual lessThan lessThanOrEqual load max maxNum min minNum mul neg not notEqual or reciprocalApproximation reciprocalSqrtApproximation replaceLane select selectBits shiftLeftByScalar shiftRightArithmeticByScalar shiftRightLogicalByScalar shuffle splat sqrt store sub swizzle xor".split(
     " ",
   );
-const allSimdMethods = [];
+const allSimdMethods: string[] = [];
 simdTypes.forEach((t) => {
   simdMethods.forEach((m) => {
     allSimdMethods.push(`SIMD.${t}.${m}`);
