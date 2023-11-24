@@ -14,7 +14,7 @@ const getRootNode = (node: Node): Node => {
 const getChildScopeForNodeIfExists = (node: Node, currentScope: Scope.Scope) =>
   currentScope.childScopes.find((scope) => scope.block === node);
 
-const getLocalVariable = (variableName: string, scope: Scope.Scope) => {
+const getLocalVariable = (variableName: string, scope: Scope.Scope): Scope.Variable | undefined => {
   const variableInCurrentScope = scope.variables.find(({ name }) => name === variableName);
   if (variableInCurrentScope) return variableInCurrentScope;
 
@@ -57,13 +57,13 @@ const isPureFunction = (node: Node, context: Rule.RuleContext) => {
   if (context.options.length > 0) {
     if (
       context.options[0].noSideEffectsWhenCalled.find(
-        (whiteListedFunction) => whiteListedFunction.function === flattenedExpression,
+        (whiteListedFunction: any) => whiteListedFunction.function === flattenedExpression,
       )
     ) {
       return true;
     }
   }
-  return pureFunctions[flattenedExpression];
+  return flattenedExpression && pureFunctions[flattenedExpression];
 };
 
 const noEffects = () => {};
@@ -80,12 +80,12 @@ const getTreeShakingComments = (comments: Comment[]) => {
     .filter(([id]) => id === TREE_SHAKING_COMMENT_ID)
     .map((tokens) => tokens.slice(1))
     .reduce((result, tokens) => result.concat(tokens), []);
-  return { has: (token) => treeShakingComments.indexOf(token) >= 0 };
+  return { has: (token: string) => treeShakingComments.indexOf(token) >= 0 };
 };
 
 const isFunctionSideEffectFree = (
   functionName: string,
-  moduleName,
+  moduleName: any,
   contextOptions: Rule.RuleContext["options"],
 ) => {
   if (contextOptions.length === 0) {
@@ -106,7 +106,7 @@ const isFunctionSideEffectFree = (
 };
 
 const isLocalVariableAWhitelistedModule = (
-  variable,
+  variable: Scope.Variable,
   property: string,
   contextOptions: Rule.RuleContext["options"],
 ) => {

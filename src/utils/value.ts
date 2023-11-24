@@ -1,6 +1,6 @@
-class Value<T> {
-  value: T;
-  hasValue: boolean;
+class Value<T = unknown> {
+  value!: T;
+  hasValue?: boolean;
 
   static of<T>(value: T) {
     return new Known(value);
@@ -26,6 +26,6 @@ class Known<T> extends Value<T> {
   }
 }
 
-class Unknown<T> extends Value<T> {}
+class Unknown extends Value {}
 
 export { Value };
