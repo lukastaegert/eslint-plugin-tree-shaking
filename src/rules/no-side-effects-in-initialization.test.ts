@@ -28,12 +28,12 @@ const ruleTester = new RuleTester();
 const linter = new Linter();
 linter.defineRule(RULE_NAME, rule);
 
-const createRollupOutput = (code) =>
+const createRollupOutput = (code: string) =>
   rollup({
     input: "main",
     treeshake: { unknownGlobalSideEffects: false, propertyReadSideEffects: false },
-    // @ts-ignore
     plugins: {
+      name: "tree-shaking-test",
       resolveId(id) {
         return id;
       },
@@ -60,7 +60,7 @@ const createRollupOutput = (code) =>
     .then((bundle) => bundle.generate({ format: "es" }))
     .then((result) => result.output[0].code.trim());
 
-const getEsLintErrors = (code) =>
+const getEsLintErrors = (code: string) =>
   linter.verify(code, {
     // @ts-ignore
     parserOptions: PARSER_OPTIONS,
@@ -68,18 +68,18 @@ const getEsLintErrors = (code) =>
   });
 
 const getErrorFreeCodeKeptMessage = (
-  code,
-  rollupOutput,
+  code: string,
+  rollupOutput: string,
 ) => `${code} was not removed by rollup even though it contained no errors. Rollup output:
 ${rollupOutput}\n`;
 
 const getErroneousCodeRemovedMessage = (
-  code,
-  esLintErrors,
+  code: string,
+  esLintErrors: ReturnType<typeof getEsLintErrors>,
 ) => `${code} was removed by rollup even though it contained errors:
 ${esLintErrors.map((error) => `- ${error.message}`).join("\n")}\n`;
 
-const verifyCodeWithRollup = (code) => {
+const verifyCodeWithRollup = (code: string) => {
   it(`reflects rollup's result for: ${code}`, () => {
     const esLintErrors = getEsLintErrors(code);
     return createRollupOutput(code)
@@ -94,11 +94,15 @@ const verifyCodeWithRollup = (code) => {
   });
 };
 
-const verifyCodeSnippetsWithRollup = (codeSnippets) =>
-  codeSnippets.forEach((codeSnippet) => verifyCodeWithRollup(codeSnippet.code || codeSnippet));
+type TestCase = Parameters<typeof ruleTester.run>[2];
+
+const verifyCodeSnippetsWithRollup = (codeSnippets: TestCase["valid"] | TestCase["invalid"]) =>
+  codeSnippets?.forEach((codeSnippet) =>
+    verifyCodeWithRollup(typeof codeSnippet === "string" ? codeSnippet : codeSnippet.code),
+  );
 
 const testRule =
-  ({ valid = [], invalid = [] }) =>
+  ({ valid = [], invalid = [] }: TestCase) =>
   () => {
     ruleTester.run(RULE_NAME, rule, {
       valid,
