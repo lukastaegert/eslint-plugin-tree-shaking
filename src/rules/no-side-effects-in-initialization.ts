@@ -24,7 +24,7 @@ import { Value } from "../utils/value";
 type ListenerArgs<T, K> = [
   node: T extends { type: K } ? T : never,
   scope: Scope.Scope,
-  options: any, // Rule.RuleContext["options"],
+  options: Rule.RuleContext["options"],
 ];
 
 type Listener<T, K> = (...args: ListenerArgs<T, K>) => void;
@@ -327,8 +327,8 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
         );
         if (classConstructor) {
           reportSideEffectsWhenCalled(classConstructor, scope, options);
-        } else if (options.superClass) {
-          reportSideEffectsWhenCalled(options.superClass, scope, options);
+        } else if ((options as any).superClass) {
+          reportSideEffectsWhenCalled((options as any).superClass, scope, options);
         }
 
         node.body
@@ -530,7 +530,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
           reportSideEffects(
             node.body,
             functionScope,
-            Object.assign({}, options, { hasValidThis: options.calledWithNew }),
+            Object.assign({}, options, { hasValidThis: (options as any).calledWithNew }),
           );
         }
       },
@@ -547,7 +547,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
           reportSideEffects(
             node.body,
             functionScope,
-            Object.assign({}, options, { hasValidThis: options.calledWithNew }),
+            Object.assign({}, options, { hasValidThis: (options as any).calledWithNew }),
           );
         }
       },
@@ -975,57 +975,73 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     return true;
   };
 
-  function reportSideEffects(node: Node, scope: Scope.Scope, options) {
+  function reportSideEffects(node: Node, scope: Scope.Scope, options: Rule.RuleContext["options"]) {
     if (!verifyNodeTypeIsKnown(node)) {
       return;
     }
-    if (NODES[node.type].reportEffects) {
-      NODES[node.type].reportEffects(node as any, scope, options);
-    } else if (NODES[node.type].getValueAndReportEffects) {
-      NODES[node.type].getValueAndReportEffects(node as any, scope, options);
+    const { reportEffects, getValueAndReportEffects } = NODES[node.type];
+    if (reportEffects) {
+      reportEffects(node as any, scope, options);
+    } else if (getValueAndReportEffects) {
+      getValueAndReportEffects(node as any, scope, options);
     } else {
       context.report({ node, message: getUnknownSideEffectError(node.type) });
     }
   }
 
-  function reportSideEffectsWhenAssigned(node: Node, scope: Scope.Scope, options) {
+  function reportSideEffectsWhenAssigned(
+    node: Node,
+    scope: Scope.Scope,
+    options: Rule.RuleContext["options"],
+  ) {
     if (!verifyNodeTypeIsKnown(node)) {
       return;
     }
-    if (NODES[node.type].reportEffectsWhenAssigned) {
-      NODES[node.type].reportEffectsWhenAssigned(node as any, scope, options);
+    const { reportEffectsWhenAssigned } = NODES[node.type];
+    if (reportEffectsWhenAssigned) {
+      reportEffectsWhenAssigned(node as any, scope, options);
     } else {
       context.report({ node, message: getAssignmentError(node.type) });
     }
   }
 
-  function reportSideEffectsWhenMutated(node: Node, scope: Scope.Scope, options) {
+  function reportSideEffectsWhenMutated(
+    node: Node,
+    scope: Scope.Scope,
+    options: Rule.RuleContext["options"],
+  ) {
     if (!verifyNodeTypeIsKnown(node) || checkedMutatedNodes.has(node)) {
       return;
     }
     checkedMutatedNodes.add(node);
-    if (NODES[node.type].reportEffectsWhenMutated) {
-      NODES[node.type].reportEffectsWhenMutated(node as any, scope, options);
+    const { reportEffectsWhenMutated } = NODES[node.type];
+    if (reportEffectsWhenMutated) {
+      reportEffectsWhenMutated(node as any, scope, options);
     } else {
       context.report({ node, message: getMutationError(node.type) });
     }
   }
 
-  function reportSideEffectsWhenCalled(node: Node, scope: Scope.Scope, options) {
+  function reportSideEffectsWhenCalled(
+    node: Node,
+    scope: Scope.Scope,
+    options: Rule.RuleContext["options"],
+  ) {
     if (
       !verifyNodeTypeIsKnown(node) ||
       checkedCalledNodes.has(node) ||
-      (options.calledWithNew && checkedNodesCalledWithNew.has(node))
+      ((options as any).calledWithNew && checkedNodesCalledWithNew.has(node))
     ) {
       return;
     }
-    if (options.calledWithNew) {
+    if ((options as any).calledWithNew) {
       checkedNodesCalledWithNew.add(node);
     } else {
       checkedCalledNodes.add(node);
     }
-    if (NODES[node.type].reportEffectsWhenCalled) {
-      NODES[node.type].reportEffectsWhenCalled(node as any, scope, options);
+    const { reportEffectsWhenCalled } = NODES[node.type];
+    if (reportEffectsWhenCalled) {
+      reportEffectsWhenCalled(node as any, scope, options);
     } else {
       context.report({ node, message: getCallError(node.type) });
     }
@@ -1039,8 +1055,9 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     if (!verifyNodeTypeIsKnown(node)) {
       return Value.unknown();
     }
-    if (NODES[node.type].getValueAndReportEffects) {
-      return NODES[node.type].getValueAndReportEffects(node as any, scope, options);
+    const { getValueAndReportEffects } = NODES[node.type];
+    if (getValueAndReportEffects) {
+      return getValueAndReportEffects(node as any, scope, options);
     }
     reportSideEffects(node, scope, options);
     return Value.unknown();
@@ -1062,9 +1079,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
       if (!verifyDefinitionTypeIsKnown(definition)) {
         return;
       }
-      if (DEFINITIONS[definition.type].reportEffectsWhenCalled) {
-        DEFINITIONS[definition.type].reportEffectsWhenCalled(definition as any, scope, options);
-      }
+      DEFINITIONS[definition.type]?.reportEffectsWhenCalled?.(definition as any, scope, options);
     };
   }
 
@@ -1076,9 +1091,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
       if (!verifyDefinitionTypeIsKnown(definition)) {
         return;
       }
-      if (DEFINITIONS[definition.type].reportEffectsWhenMutated) {
-        DEFINITIONS[definition.type].reportEffectsWhenMutated(definition as any, scope, options);
-      }
+      DEFINITIONS[definition.type]?.reportEffectsWhenMutated?.(definition as any, scope, options);
     };
   }
 
@@ -1097,7 +1110,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
   if (!moduleScope) {
     reportFatalError(programNode, "Could not find module scope.");
   } else {
-    programNode.body.forEach((subNode) => reportSideEffects(subNode, moduleScope, {}));
+    programNode.body.forEach((subNode) => reportSideEffects(subNode, moduleScope, {} as any));
   }
 };
 
