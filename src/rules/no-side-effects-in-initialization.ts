@@ -206,6 +206,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     delete: () => Value.unknown(),
   };
 
+  // @ts-ignore TODO:
   const NODES: ListenerMap<Node> = {
     ArrayExpression: {
       reportEffects(node, scope, options) {
@@ -372,14 +373,6 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
             Object.assign({}, options, { superClass: node.superClass }),
           );
         }
-      },
-    },
-
-    // @ts-ignore TODO:
-    ClassProperty: {
-      reportEffects(node, scope, options) {
-        reportSideEffects(node.key, scope, options);
-        reportSideEffects(node.value, scope, options);
       },
     },
 
