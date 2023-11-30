@@ -437,20 +437,25 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     ExportDefaultDeclaration: {
       reportEffects(node, scope, options) {
         if (
-          getTreeShakingComments(context.sourceCode.getCommentsBefore(node.declaration)).has(
-            COMMENT_NO_SIDE_EFFECT_WHEN_CALLED,
-          )
+          node.declaration.type !== "FunctionDeclaration" &&
+          node.declaration.type !== "ClassDeclaration"
         ) {
-          reportSideEffectsWhenCalled(node.declaration, scope, options);
+          if (
+            getTreeShakingComments(context.sourceCode.getCommentsBefore(node.declaration)).has(
+              COMMENT_NO_SIDE_EFFECT_WHEN_CALLED,
+            )
+          ) {
+            reportSideEffectsWhenCalled(node.declaration, scope, options);
+          }
+          reportSideEffects(node.declaration, scope, options);
         }
-        reportSideEffects(node.declaration, scope, options);
       },
     },
 
     ExportNamedDeclaration: {
       reportEffects(node, scope, options) {
         node.specifiers.forEach((subNode) => reportSideEffects(subNode, scope, options));
-        reportSideEffects(node.declaration, scope, options);
+        if (node.declaration) reportSideEffects(node.declaration, scope, options);
       },
     },
 
@@ -601,12 +606,14 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
       reportEffects(node, scope, options) {
         const testResult = getValueAndReportSideEffects(node.test, scope, options);
         if (testResult.hasValue) {
-          testResult.value
-            ? reportSideEffects(node.consequent, scope, options)
-            : reportSideEffects(node.alternate, scope, options);
+          if (testResult.value) {
+            reportSideEffects(node.consequent, scope, options);
+          } else if (node.alternate) {
+            reportSideEffects(node.alternate, scope, options);
+          }
         } else {
           reportSideEffects(node.consequent, scope, options);
-          reportSideEffects(node.alternate, scope, options);
+          if (node.alternate) reportSideEffects(node.alternate, scope, options);
         }
       },
     },
@@ -617,7 +624,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
 
     JSXAttribute: {
       reportEffects(node, scope, options) {
-        reportSideEffects(node.value, scope, options);
+        if (node.value) reportSideEffects(node.value, scope, options);
       },
     },
 
@@ -649,11 +656,12 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
               if (partial) {
                 context.report({ node: identifier, message: ERROR_CALL_DESTRUCTURED });
               } else {
-                reportSideEffectsWhenCalled(
-                  writeExpr,
-                  from,
-                  Object.assign({}, options, { calledWithNew: true }),
-                );
+                if (writeExpr)
+                  reportSideEffectsWhenCalled(
+                    writeExpr,
+                    from,
+                    Object.assign({}, options, { calledWithNew: true }),
+                  );
               }
             });
             variableInScope.defs.forEach(
@@ -811,7 +819,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
         reportSideEffects(node.key, scope, options);
       },
       reportEffectsWhenCalled(node, scope, options) {
-        reportSideEffects(node.value, scope, options);
+        if (node.value) reportSideEffects(node.value, scope, options);
       },
     },
 
@@ -821,7 +829,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
 
     ReturnStatement: {
       reportEffects(node, scope, options) {
-        reportSideEffects(node.argument, scope, options);
+        if (node.argument) reportSideEffects(node.argument, scope, options);
       },
     },
 
@@ -843,7 +851,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
 
     SwitchCase: {
       reportEffects(node, scope, options) {
-        reportSideEffects(node.test, scope, options);
+        if (node.test) reportSideEffects(node.test, scope, options);
         node.consequent.forEach((subNode) => reportSideEffects(subNode, scope, options));
       },
     },
@@ -892,8 +900,8 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     TryStatement: {
       reportEffects(node, scope, options) {
         reportSideEffects(node.block, scope, options);
-        reportSideEffects(node.handler, scope, options);
-        reportSideEffects(node.finalizer, scope, options);
+        if (node.handler) reportSideEffects(node.handler, scope, options);
+        if (node.finalizer) reportSideEffects(node.finalizer, scope, options);
       },
     },
 
@@ -949,7 +957,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
 
     YieldExpression: {
       reportEffects(node, scope, options) {
-        reportSideEffects(node.argument, scope, options);
+        if (node.argument) reportSideEffects(node.argument, scope, options);
       },
     },
   };
@@ -1029,7 +1037,7 @@ const reportSideEffectsInProgram = (context: Rule.RuleContext, programNode: Prog
     options: Rule.RuleContext["options"],
   ): Value {
     if (!verifyNodeTypeIsKnown(node)) {
-      return;
+      return Value.unknown();
     }
     if (NODES[node.type].getValueAndReportEffects) {
       return NODES[node.type].getValueAndReportEffects(node as any, scope, options);

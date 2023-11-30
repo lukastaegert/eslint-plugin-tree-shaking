@@ -84,7 +84,7 @@ const getTreeShakingComments = (comments: Comment[]) => {
 };
 
 const isFunctionSideEffectFree = (
-  functionName: string,
+  functionName: string | undefined,
   moduleName: any,
   contextOptions: Rule.RuleContext["options"],
 ) => {
@@ -107,7 +107,7 @@ const isFunctionSideEffectFree = (
 
 const isLocalVariableAWhitelistedModule = (
   variable: Scope.Variable,
-  property: string,
+  property: string | undefined,
   contextOptions: Rule.RuleContext["options"],
 ) => {
   if (
