@@ -44,7 +44,7 @@ const hasPureNotation = (node: Node, context: Rule.RuleContext) => {
     const lastComment = leadingComments[leadingComments.length - 1].value;
 
     // https://rollupjs.org/configuration-options/#treeshake-annotations
-    if (["@__PURE__", "#__PURE__"].includes(lastComment)) {
+    if (["@__PURE__", "#__PURE__"].includes(lastComment.trim())) {
       return true;
     }
   }
