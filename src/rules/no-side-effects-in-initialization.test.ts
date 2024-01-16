@@ -1755,6 +1755,7 @@ describe(
       'import {/* tree-shaking  no-side-effects-when-called */ x} from "import-no-effects"; x()',
       'import {x as /* tree-shaking  no-side-effects-when-called */ y} from "import-no-effects"; y()',
       'import {x} from "import"; /*@__PURE__*/ x()',
+      'import {x} from "import"; /* @__PURE__ */ x()',
     ],
     invalid: [
       {
