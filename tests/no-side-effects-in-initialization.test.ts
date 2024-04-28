@@ -1,10 +1,10 @@
-/* Possible improvements for rollup:
- * * Properly handle valid this values
- * * Deleting an object expression member whose value is a global does not need to be a side-effect
+/** Possible improvements for rollup:
+ * Properly handle valid this values
+ * Deleting an object expression member whose value is a global does not need to be a side-effect
  */
 
 import { describe, it } from "vitest";
-import { noSideEffectsInInitialization as rule } from "./no-side-effects-in-initialization";
+import { noSideEffectsInInitialization as rule } from "../src/rules/no-side-effects-in-initialization";
 import { Linter, RuleTester } from "eslint";
 import { rollup } from "rollup";
 
