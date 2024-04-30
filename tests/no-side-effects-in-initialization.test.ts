@@ -1,6 +1,6 @@
-/** Possible improvements for rollup:
- * Properly handle valid this values
- * Deleting an object expression member whose value is a global does not need to be a side-effect
+/*  Possible improvements for rollup:
+ * - Properly handle valid this values
+ * - Deleting an object expression member whose value is a global does not need to be a side-effect
  */
 
 import { describe, it } from "vitest";
